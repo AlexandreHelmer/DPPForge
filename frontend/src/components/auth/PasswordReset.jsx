@@ -20,11 +20,15 @@ const PasswordReset = () => {
             setSuccess('Un email avec les instructions pour réinitialiser votre mot de passe a été envoyé.');
             setEmail('');
         } catch (err) {
-            setError(
-                err.response?.data?.detail ||
-                err.response?.data?.error ||
-                'Erreur lors de l\'envoi de l\'email'
-            );
+            const data = err.response?.data;
+            if (data && typeof data === 'object') {
+                const errorMsg = Object.entries(data)
+                    .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(' ') : val}`)
+                    .join(' | ');
+                setError(errorMsg);
+            } else {
+                setError(data?.detail || data?.error || 'Erreur lors de l\'envoi de l\'email');
+            }
         } finally {
             setLoading(false);
         }

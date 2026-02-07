@@ -89,7 +89,7 @@ export const authService = {
 
     // Resend verification email
     async resendVerification(email) {
-        const response = await api.post('/api/auth/registration/resend-email/', { email });
+        const response = await api.post('/api/auth/social/emails/resend/', { email });
         return response.data;
     },
 
@@ -154,6 +154,24 @@ export const authService = {
     async deleteAccount(password = null) {
         const response = await api.post('/api/auth/social/delete-account/', { password });
         this.logout();
+        return response.data;
+    },
+
+    // Get all emails associated with account
+    async getEmailStatus() {
+        const response = await api.get('/api/auth/social/emails/');
+        return response.data;
+    },
+
+    // Add a new email address
+    async changeEmail(email) {
+        const response = await api.post('/api/auth/social/emails/', { email });
+        return response.data;
+    },
+
+    // Set an email as primary
+    async makePrimaryEmail(email) {
+        const response = await api.post('/api/auth/social/emails/primary/', { email });
         return response.data;
     }
 };

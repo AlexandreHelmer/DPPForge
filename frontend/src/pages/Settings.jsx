@@ -66,11 +66,38 @@ const Settings = () => {
         setPasswordStatus({ type: '', message: '' });
 
         try {
-            await authService.changePassword(passwordData.old_password, passwordData.new_password);
+            await authService.changePassword(
+                passwordData.old_password,
+                passwordData.new_password,
+                passwordData.confirm_password
+            );
             setPasswordStatus({ type: 'success', message: 'Mot de passe changé avec succès' });
             setPasswordData({ old_password: '', new_password: '', confirm_password: '' });
         } catch (err) {
-            setPasswordStatus({ type: 'danger', message: err.response?.data?.error || 'Erreur lors du changement de mot de passe' });
+            let errorMsg = 'Erreur lors du changement de mot de passe';
+            const data = err.response?.data;
+
+            if (data) {
+                if (typeof data === 'string') {
+                    errorMsg = data;
+                } else if (data.error) {
+                    errorMsg = data.error;
+                } else if (data.non_field_errors) {
+                    errorMsg = data.non_field_errors.join(' ');
+                } else if (data.old_password) {
+                    errorMsg = `Ancien mot de passe : ${data.old_password.join(' ')}`;
+                } else if (data.new_password1) {
+                    errorMsg = `Nouveau mot de passe : ${data.new_password1.join(' ')}`;
+                } else {
+                    // Combine other field errors
+                    const errors = Object.entries(data)
+                        .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(' ') : val}`)
+                        .join(' | ');
+                    if (errors) errorMsg = errors;
+                }
+            }
+
+            setPasswordStatus({ type: 'danger', message: errorMsg });
         } finally {
             setPasswordLoading(false);
         }
