@@ -1,0 +1,26 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Authentication Error" %}{% endblock %}
+
+{% block content %}
+<div class="alert alert-danger" role="alert">
+    <h4 class="alert-heading">Erreur d'authentification</h4>
+    <p>{{ exception }}</p>
+</div>
+
+<div class="text-center mt-4">
+    <button class="btn btn-primary" onclick="window.close()">Fermer</button>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+        if (window.opener) {
+            window.close();
+        }
+    }, 5000);
+</script>
+{% endblock %}

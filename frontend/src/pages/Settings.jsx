@@ -1,58 +1,181 @@
-import React, { useState } from 'react';
-import { Card, Form, Button, Row, Col, Alert } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Card, Form, Button, Row, Col, Alert, Tabs, Tab, Badge, ListGroup } from 'react-bootstrap';
+import { FaGoogle, FaMicrosoft, FaGithub, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { authService } from '../services/auth';
-import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
     const user = authService.getStoredUser();
-    const navigate = useNavigate();
 
+    // Password change state
     const [passwordData, setPasswordData] = useState({
         old_password: '',
         new_password: '',
         confirm_password: '',
     });
-    const [status, setStatus] = useState({ type: '', message: '' });
-    const [loading, setLoading] = useState(false);
+    const [passwordStatus, setPasswordStatus] = useState({ type: '', message: '' });
+    const [passwordLoading, setPasswordLoading] = useState(false);
+
+    // Email change state
+    const [newEmail, setNewEmail] = useState('');
+    const [emailStatus, setEmailStatus] = useState({ type: '', message: '' });
+    const [emailLoading, setEmailLoading] = useState(false);
+    const [emailAddresses, setEmailAddresses] = useState([]);
+
+    // Social accounts state
+    const [socialAccounts, setSocialAccounts] = useState([]);
+    const [socialLoading, setSocialLoading] = useState(false);
+    const [socialStatus, setSocialStatus] = useState({ type: '', message: '' });
+
+    // Delete account state
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleteLoading, setDeleteLoading] = useState(false);
+
+    // Load email addresses and social accounts
+    useEffect(() => {
+        loadEmailAddresses();
+        loadSocialAccounts();
+    }, []);
+
+    const loadEmailAddresses = async () => {
+        try {
+            const data = await authService.getEmailStatus();
+            setEmailAddresses(data.emails || []);
+        } catch (err) {
+            console.error('Failed to load email addresses:', err);
+        }
+    };
+
+    const loadSocialAccounts = async () => {
+        try {
+            const data = await authService.getSocialAccounts();
+            setSocialAccounts(data || []);
+        } catch (err) {
+            console.error('Failed to load social accounts:', err);
+        }
+    };
 
     const handlePasswordChange = async (e) => {
         e.preventDefault();
         if (passwordData.new_password !== passwordData.confirm_password) {
-            setStatus({ type: 'danger', message: 'Les nouveaux mots de passe ne correspondent pas' });
+            setPasswordStatus({ type: 'danger', message: 'Les nouveaux mots de passe ne correspondent pas' });
             return;
         }
 
-        setLoading(true);
-        setStatus({ type: '', message: '' });
+        setPasswordLoading(true);
+        setPasswordStatus({ type: '', message: '' });
 
         try {
-            // Simplified: in a real app we'd have a specific endpoint for password change
-            // For this demo, let's assume we use a general profile update or specific allauth endpoint
-            // Since it's not implemented on backend yet, I'll just show the UI for now 
-            // and explain we need a dedicated endpoint.
-            setStatus({ type: 'info', message: 'Fonctionnalité en cours de développement sur le backend.' });
+            await authService.changePassword(passwordData.old_password, passwordData.new_password);
+            setPasswordStatus({ type: 'success', message: 'Mot de passe changé avec succès' });
+            setPasswordData({ old_password: '', new_password: '', confirm_password: '' });
         } catch (err) {
-            setStatus({ type: 'danger', message: 'Erreur lors du changement de mot de passe' });
+            setPasswordStatus({ type: 'danger', message: err.response?.data?.error || 'Erreur lors du changement de mot de passe' });
         } finally {
-            setLoading(false);
+            setPasswordLoading(false);
         }
     };
 
-    const handleDeleteAccount = async () => {
-        if (window.confirm('Voulez-vous vraiment supprimer votre compte ? Cette action est irréversible.')) {
-            // Similarly, needs a backend endpoint
-            alert('Pour supprimer votre compte, veuillez contacter le support admin@dpp.local');
+    const handleEmailChange = async (e) => {
+        e.preventDefault();
+        setEmailLoading(true);
+        setEmailStatus({ type: '', message: '' });
+
+        try {
+            const result = await authService.changeEmail(newEmail);
+            setEmailStatus({ type: 'success', message: result.message });
+            setNewEmail('');
+            loadEmailAddresses();
+        } catch (err) {
+            setEmailStatus({ type: 'danger', message: err.response?.data?.error || 'Erreur lors du changement d\'email' });
+        } finally {
+            setEmailLoading(false);
         }
+    };
+
+    const handleResendVerification = async (email) => {
+        try {
+            const result = await authService.resendVerification(email);
+            setEmailStatus({ type: 'success', message: result.message });
+        } catch (err) {
+            setEmailStatus({ type: 'danger', message: 'Erreur lors de l\'envoi de vérification' });
+        }
+    };
+
+    const handleMakePrimary = async (email) => {
+        try {
+            const result = await authService.makePrimaryEmail(email);
+            setEmailStatus({ type: 'success', message: result.message });
+            loadEmailAddresses();
+            // Refresh user data
+            await authService.getCurrentUser();
+        } catch (err) {
+            setEmailStatus({ type: 'danger', message: err.response?.data?.error || 'Erreur' });
+        }
+    };
+
+    const handleDisconnectSocial = async (accountId, provider) => {
+        if (!window.confirm(`Voulez-vous vraiment déconnecter votre compte ${provider} ?`)) {
+            return;
+        }
+
+        setSocialLoading(true);
+        setSocialStatus({ type: '', message: '' });
+
+        try {
+            const result = await authService.disconnectSocialAccount(accountId);
+            setSocialStatus({ type: 'success', message: result.message });
+            loadSocialAccounts();
+        } catch (err) {
+            setSocialStatus({ type: 'danger', message: err.response?.data?.error || 'Erreur lors de la déconnexion' });
+        } finally {
+            setSocialLoading(false);
+        }
+    };
+
+    const handleConnectSocial = (provider) => {
+        authService.openSocialPopup(provider, () => {
+            loadSocialAccounts();
+            setSocialStatus({ type: 'success', message: `Compte ${provider} connecté avec succès` });
+        });
+    };
+
+    const handleDeleteAccount = async (e) => {
+        e.preventDefault();
+        setDeleteLoading(true);
+        try {
+            await authService.deleteAccount(deletePassword);
+            // Redirect will happen after logout in authService
+            window.location.href = '/login?deleted=true';
+        } catch (err) {
+            alert(err.response?.data?.error || 'Erreur lors de la suppression du compte');
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    const getProviderIcon = (provider) => {
+        switch (provider) {
+            case 'google': return <FaGoogle className="text-danger" />;
+            case 'microsoft': return <FaMicrosoft className="text-primary" />;
+            case 'github': return <FaGithub />;
+            default: return null;
+        }
+    };
+
+    const isProviderConnected = (provider) => {
+        return socialAccounts.some(acc => acc.provider === provider);
     };
 
     return (
         <div>
-            <h1 className="mb-4">Paramètres de l'entreprise</h1>
+            <h1 className="mb-4">Paramètres du Compte</h1>
 
-            <Row>
-                <Col md={6}>
-                    <Card className="mb-4">
-                        <Card.Header>Informations de Profil</Card.Header>
+            <Tabs defaultActiveKey="profile" id="settings-tabs" className="mb-3">
+                {/* Profile Tab */}
+                <Tab eventKey="profile" title="Profil">
+                    <Card>
+                        <Card.Header>Informations de l'Entreprise</Card.Header>
                         <Card.Body>
                             <Form>
                                 <Form.Group className="mb-3">
@@ -60,24 +183,114 @@ const Settings = () => {
                                     <Form.Control type="text" value={user?.company_name || ''} readOnly disabled />
                                 </Form.Group>
                                 <Form.Group className="mb-3">
-                                    <Form.Label>Email</Form.Label>
+                                    <Form.Label>Email principal</Form.Label>
                                     <Form.Control type="email" value={user?.email || ''} readOnly disabled />
                                 </Form.Group>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Numéro SIREN/SIRET</Form.Label>
                                     <Form.Control type="text" value={user?.company_registration || ''} readOnly disabled />
                                 </Form.Group>
-                                <p className="text-muted small">Les informations de l'entreprise sont vérifiées et ne peuvent être modifiées qu'en contactant le support.</p>
+                                <Alert variant="info" className="mb-0">
+                                    Les informations de l'entreprise sont vérifiées et ne peuvent être modifiées qu'en contactant le support.
+                                </Alert>
                             </Form>
                         </Card.Body>
                     </Card>
-                </Col>
+                </Tab>
 
-                <Col md={6}>
-                    <Card className="mb-4">
-                        <Card.Header>Sécurité</Card.Header>
+                {/* Email Management Tab */}
+                <Tab eventKey="email" title="Gestion des Emails">
+                    <Row>
+                        <Col md={6}>
+                            <Card className="mb-3">
+                                <Card.Header>Emails Associés</Card.Header>
+                                <Card.Body>
+                                    {emailAddresses.length > 0 ? (
+                                        <ListGroup variant="flush">
+                                            {emailAddresses.map((ea, idx) => (
+                                                <ListGroup.Item key={idx} className="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <div>
+                                                            {ea.email}
+                                                            {ea.primary && <Badge bg="primary" className="ms-2">Principal</Badge>}
+                                                        </div>
+                                                        <small className="text-muted">
+                                                            {ea.verified ? (
+                                                                <span className="text-success">
+                                                                    <FaCheckCircle /> Vérifié
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-warning">
+                                                                    <FaTimesCircle /> Non vérifié
+                                                                </span>
+                                                            )}
+                                                        </small>
+                                                    </div>
+                                                    <div>
+                                                        {!ea.verified && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline-primary"
+                                                                onClick={() => handleResendVerification(ea.email)}
+                                                            >
+                                                                Renvoyer
+                                                            </Button>
+                                                        )}
+                                                        {ea.verified && !ea.primary && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline-success"
+                                                                onClick={() => handleMakePrimary(ea.email)}
+                                                            >
+                                                                Définir principal
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </ListGroup.Item>
+                                            ))}
+                                        </ListGroup>
+                                    ) : (
+                                        <p className="text-muted">Aucun email trouvé</p>
+                                    )}
+                                </Card.Body>
+                            </Card>
+                        </Col>
+
+                        <Col md={6}>
+                            <Card>
+                                <Card.Header>Ajouter un Nouvel Email</Card.Header>
+                                <Card.Body>
+                                    {emailStatus.message && <Alert variant={emailStatus.type}>{emailStatus.message}</Alert>}
+                                    <Form onSubmit={handleEmailChange}>
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Nouvel email</Form.Label>
+                                            <Form.Control
+                                                type="email"
+                                                required
+                                                value={newEmail}
+                                                onChange={(e) => setNewEmail(e.target.value)}
+                                                placeholder="nouveau@exemple.com"
+                                            />
+                                            <Form.Text className="text-muted">
+                                                Un email de vérification sera envoyé à cette adresse
+                                            </Form.Text>
+                                        </Form.Group>
+                                        <Button variant="primary" type="submit" disabled={emailLoading}>
+                                            {emailLoading ? 'Envoi...' : 'Ajouter l\'email'}
+                                        </Button>
+                                    </Form>
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    </Row>
+                </Tab>
+
+                {/* Password Tab */}
+                <Tab eventKey="password" title="Mot de Passe">
+                    <Card>
+                        <Card.Header>Changer le Mot de Passe</Card.Header>
                         <Card.Body>
-                            {status.message && <Alert variant={status.type}>{status.message}</Alert>}
+                            {passwordStatus.message && <Alert variant={passwordStatus.type}>{passwordStatus.message}</Alert>}
                             <Form onSubmit={handlePasswordChange}>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Ancien mot de passe</Form.Label>
@@ -106,26 +319,160 @@ const Settings = () => {
                                         onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
                                     />
                                 </Form.Group>
-                                <Button variant="primary" type="submit" disabled={loading}>
-                                    Changer le mot de passe
+                                <Button variant="primary" type="submit" disabled={passwordLoading}>
+                                    {passwordLoading ? 'Changement...' : 'Changer le mot de passe'}
                                 </Button>
                             </Form>
                         </Card.Body>
                     </Card>
+                </Tab>
 
-                    <Card border="danger">
-                        <Card.Header className="bg-danger text-white">Zone de danger</Card.Header>
+                {/* Social Accounts Tab */}
+                <Tab eventKey="social" title="Comptes Associés">
+                    <Card>
+                        <Card.Header>Comptes Sociaux Connectés</Card.Header>
                         <Card.Body>
-                            <p>La suppression de votre compte entrainera la suppression de tous vos produits, composants et instances de Digital Twins.</p>
-                            <Button variant="danger" onClick={handleDeleteAccount}>
-                                Supprimer mon compte entreprise
-                            </Button>
+                            {socialStatus.message && <Alert variant={socialStatus.type}>{socialStatus.message}</Alert>}
+
+                            <h5 className="mb-3">Comptes Connectés</h5>
+                            {socialAccounts.length > 0 ? (
+                                <ListGroup className="mb-4">
+                                    {socialAccounts.map((account) => (
+                                        <ListGroup.Item key={account.id} className="d-flex justify-content-between align-items-center">
+                                            <div className="d-flex align-items-center gap-2">
+                                                {getProviderIcon(account.provider)}
+                                                <div>
+                                                    <strong>{account.provider_name}</strong>
+                                                    <br />
+                                                    <small className="text-muted">
+                                                        Connecté le {new Date(account.date_joined).toLocaleDateString()}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                variant="outline-danger"
+                                                onClick={() => handleDisconnectSocial(account.id, account.provider_name)}
+                                                disabled={socialLoading}
+                                            >
+                                                Déconnecter
+                                            </Button>
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
+                            ) : (
+                                <Alert variant="info" className="mb-4">
+                                    Aucun compte social connecté
+                                </Alert>
+                            )}
+
+                            <h5 className="mb-3">Connecter un Nouveau Compte</h5>
+                            <div className="d-grid gap-2">
+                                {!isProviderConnected('google') && (
+                                    <Button
+                                        variant="outline-danger"
+                                        onClick={() => handleConnectSocial('google')}
+                                        className="d-flex align-items-center justify-content-center gap-2"
+                                    >
+                                        <FaGoogle /> Connecter Google
+                                    </Button>
+                                )}
+                                {!isProviderConnected('microsoft') && (
+                                    <Button
+                                        variant="outline-primary"
+                                        onClick={() => handleConnectSocial('microsoft')}
+                                        className="d-flex align-items-center justify-content-center gap-2"
+                                    >
+                                        <FaMicrosoft /> Connecter Microsoft
+                                    </Button>
+                                )}
+                                {!isProviderConnected('github') && (
+                                    <Button
+                                        variant="outline-dark"
+                                        onClick={() => handleConnectSocial('github')}
+                                        className="d-flex align-items-center justify-content-center gap-2"
+                                    >
+                                        <FaGithub /> Connecter GitHub
+                                    </Button>
+                                )}
+                            </div>
                         </Card.Body>
                     </Card>
-                </Col>
-            </Row>
+                </Tab>
+
+                {/* Danger Zone Tab */}
+                <Tab eventKey="danger" title="Zone de Danger">
+                    <Card border="danger">
+                        <Card.Header className="bg-danger text-white">Supprimer mon compte</Card.Header>
+                        <Card.Body>
+                            <Alert variant="warning">
+                                <h5>Attention : Action Irréversible</h5>
+                                <p>
+                                    La suppression de votre compte anonymisera vos données personnelles.
+                                    Vous ne pourrez plus vous connecter ni accéder à votre tableau de bord.
+                                </p>
+                                <hr />
+                                <p className="mb-0">
+                                    <strong>Note :</strong> Conformément aux régulations EU DPP, les Passeports Numériques de Produits
+                                    et Digital Twins que vous avez générés <strong>resteront accessibles</strong> publiquement pour garantir
+                                    la traçabilité des produits déjà sur le marché.
+                                </p>
+                            </Alert>
+
+                            {!showDeleteConfirm ? (
+                                <Button
+                                    variant="outline-danger"
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                >
+                                    Supprimer mon compte...
+                                </Button>
+                            ) : (
+                                <Form onSubmit={handleDeleteAccount}>
+                                    <p className="text-danger">
+                                        Voulez-vous vraiment continuer ? Cette action est définitive.
+                                    </p>
+
+                                    {user?.has_password && (
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Veuillez entrer votre mot de passe pour confirmer :</Form.Label>
+                                            <Form.Control
+                                                type="password"
+                                                required
+                                                value={deletePassword}
+                                                onChange={(e) => setDeletePassword(e.target.value)}
+                                                placeholder="Mot de passe actuel"
+                                            />
+                                        </Form.Group>
+                                    )}
+
+                                    <div className="d-flex gap-2">
+                                        <Button
+                                            variant="danger"
+                                            type="submit"
+                                            disabled={deleteLoading}
+                                        >
+                                            {deleteLoading ? 'Suppression...' : 'Confirmer la suppression définitive'}
+                                        </Button>
+                                        <Button
+                                            variant="secondary"
+                                            onClick={() => {
+                                                setShowDeleteConfirm(false);
+                                                setDeletePassword('');
+                                            }}
+                                            disabled={deleteLoading}
+                                        >
+                                            Annuler
+                                        </Button>
+                                    </div>
+                                </Form>
+                            )}
+                        </Card.Body>
+                    </Card>
+                </Tab>
+            </Tabs>
         </div>
     );
 };
 
 export default Settings;
+

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Form, Button, Alert, Tabs, Tab } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth';
+import SocialLoginButtons from '../components/SocialLoginButtons';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -17,6 +18,16 @@ const Login = () => {
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('verified') === 'true') {
+            setSuccess('Votre adresse email a été validée avec succès ! Vous pouvez maintenant vous connecter.');
+        }
+        if (params.get('deleted') === 'true') {
+            setSuccess('Votre compte a été supprimé définitivement.');
+        }
+    }, []);
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
@@ -27,9 +38,36 @@ const Login = () => {
             await authService.getCurrentUser();
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.detail || 'Erreur de connexion');
+            const data = err.response?.data;
+            if (data?.code === 'EMAIL_NOT_VERIFIED' || data?.code === 'ACCOUNT_INACTIVE') {
+                setError(
+                    <span>
+                        {data.error}{' '}
+                        <Button
+                            variant="link"
+                            type="button"
+                            className="p-0 align-baseline"
+                            onClick={() => handleResendVerification(data.email)}
+                        >
+                            Renvoyer le lien
+                        </Button>
+                    </span>
+                );
+            } else {
+                setError(data?.error || data?.detail || 'Erreur de connexion');
+            }
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleResendVerification = async (email) => {
+        try {
+            const result = await authService.resendVerification(email);
+            setSuccess(result.message);
+            setError('');
+        } catch (err) {
+            setError(err.response?.data?.error || 'Erreur lors de l\'envoi');
         }
     };
 
@@ -56,17 +94,24 @@ const Login = () => {
             setRegisterData({ email: '', company_name: '', password1: '', password2: '' });
         } catch (err) {
             const errors = err.response?.data;
-            if (errors) {
+            if (errors && typeof errors === 'object') {
                 const errorMessages = Object.entries(errors)
                     .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
                     .join(' | ');
                 setError(errorMessages);
+            } else if (typeof errors === 'string' && !errors.startsWith('<!DOCTYPE')) {
+                setError(errors);
             } else {
-                setError('Erreur lors de la création du compte');
+                setError('Erreur lors de la création du compte (Le serveur a renvoyé une erreur).');
             }
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSocialSuccess = () => {
+        // Called after successful OAuth login
+        navigate('/dashboard');
     };
 
     return (
@@ -106,6 +151,19 @@ const Login = () => {
                                     {loading ? 'Connexion...' : 'Se connecter'}
                                 </Button>
                             </Form>
+
+                            {/* Divider */}
+                            <div className="d-flex align-items-center my-4">
+                                <hr className="flex-grow-1" />
+                                <span className="mx-3 text-muted">OU</span>
+                                <hr className="flex-grow-1" />
+                            </div>
+
+                            {/* Social Login Buttons */}
+                            <SocialLoginButtons
+                                variant="outline-secondary"
+                                onSuccess={handleSocialSuccess}
+                            />
                         </Tab>
 
                         <Tab eventKey="register" title="Inscription">
@@ -161,6 +219,19 @@ const Login = () => {
                                     {loading ? 'Création...' : 'Créer un compte'}
                                 </Button>
                             </Form>
+
+                            {/* Divider */}
+                            <div className="d-flex align-items-center my-4">
+                                <hr className="flex-grow-1" />
+                                <span className="mx-3 text-muted">OU</span>
+                                <hr className="flex-grow-1" />
+                            </div>
+
+                            {/* Social Login Buttons */}
+                            <SocialLoginButtons
+                                variant="outline-secondary"
+                                onSuccess={handleSocialSuccess}
+                            />
                         </Tab>
                     </Tabs>
                 </Card.Body>
@@ -170,3 +241,4 @@ const Login = () => {
 };
 
 export default Login;
+

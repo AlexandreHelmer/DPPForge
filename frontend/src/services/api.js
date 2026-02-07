@@ -13,8 +13,13 @@ const api = axios.create({
 // Add auth token to requests
 api.interceptors.request.use(
     (config) => {
+        // Don't add token for login/signup/resend-verification
+        const isPublicEndpont = config.url.includes('/login/') ||
+            config.url.includes('/signup/') ||
+            config.url.includes('/resend-verification/');
+
         const token = localStorage.getItem('authToken');
-        if (token) {
+        if (token && !isPublicEndpont) {
             config.headers.Authorization = `Token ${token}`;
         }
         return config;
@@ -27,10 +32,12 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Unauthorized - clear token and redirect to login
+            // Unauthorized - clear token
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
-            window.location.href = '/login';
+
+            // We don't force a redirect here anymore to avoid page reloads
+            // The App.js poll or PrivateRoute will handle it gracefully
         }
         return Promise.reject(error);
     }

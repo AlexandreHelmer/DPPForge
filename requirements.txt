@@ -1,6 +1,8 @@
 Django>=4.2,<5.0
 djangorestframework>=3.14.0
 django-allauth[socialaccount]>=0.57.0
+dj-rest-auth[with_social]>=5.0.0
+# Note: The socialaccount extra includes common providers like Google, Microsoft, GitHub
 django-cors-headers>=4.3.0
 python-decouple>=3.8
 qrcode[pil]>=7.4.2

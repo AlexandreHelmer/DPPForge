@@ -1,0 +1,72 @@
+import React, { useState } from 'react';
+import { Card, Form, Button, Alert } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+import { authService } from '../../services/auth';
+
+const PasswordReset = () => {
+    const [email, setEmail] = useState('');
+    const [success, setSuccess] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setSuccess('');
+        setLoading(true);
+
+        try {
+            await authService.requestPasswordReset(email);
+            setSuccess('Un email avec les instructions pour réinitialiser votre mot de passe a été envoyé.');
+            setEmail('');
+        } catch (err) {
+            setError(
+                err.response?.data?.detail ||
+                err.response?.data?.error ||
+                'Erreur lors de l\'envoi de l\'email'
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
+            <Card style={{ width: '500px' }}>
+                <Card.Body>
+                    <h2 className="text-center mb-4">Réinitialiser le mot de passe</h2>
+
+                    {error && <Alert variant="danger">{error}</Alert>}
+                    {success && <Alert variant="success">{success}</Alert>}
+
+                    <p className="text-muted mb-4">
+                        Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                    </p>
+
+                    <Form onSubmit={handleSubmit}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Email</Form.Label>
+                            <Form.Control
+                                type="email"
+                                placeholder="email@exemple.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+
+                        <Button variant="primary" type="submit" className="w-100" disabled={loading}>
+                            {loading ? 'Envoi...' : 'Envoyer le lien'}
+                        </Button>
+                    </Form>
+
+                    <div className="mt-3 text-center">
+                        <Link to="/auth/login">Retour à la connexion</Link>
+                    </div>
+                </Card.Body>
+            </Card>
+        </div>
+    );
+};
+
+export default PasswordReset;

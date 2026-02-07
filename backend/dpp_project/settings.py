@@ -32,11 +32,15 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework.authtoken',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
     'corsheaders',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.microsoft',
+    'allauth.socialaccount.providers.github',
     
     # Local apps
     'accounts',
@@ -163,17 +167,45 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+# Django-allauth Configuration (modern format)
 ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*']
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_ADAPTER = 'accounts.adapters.CompanyAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CompanySocialAccountAdapter'
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # Trust social provider email
+SOCIALACCOUNT_LOGIN_ON_GET = True  # Bypass confirmation page for easier popup flow
+
+# dj-rest-auth Configuration
+REST_AUTH = {
+    'USE_JWT': False,  # Using token-based auth for now
+    'USER_DETAILS_SERIALIZER': 'accounts.serializers.CompanySerializer',
+    'REGISTER_SERIALIZER': 'accounts.serializers.CustomRegisterSerializer',
+    'LOGIN_SERIALIZER': 'accounts.serializers.CustomLoginSerializer',
+    'PASSWORD_RESET_CONFIRM_URL': 'auth/password-reset/confirm/{uid}/{token}',
+    'EMAIL_CONFIRMATION_URL': 'auth/verify-email/{key}',
+    'SESSION_LOGIN': False,
+}
+
+# Email Configuration
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+
+# Frontend URL for redirects
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+# Authentication Redirects
+LOGIN_REDIRECT_URL = FRONTEND_URL + '/dashboard'
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = FRONTEND_URL + '/login?verified=true'
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = FRONTEND_URL + '/dashboard?verified=true'
 
 # Social Account Providers
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
-            'client_id': config('SOCIALACCOUNT_PROVIDERS_GOOGLE_CLIENT_ID', default=''),
-            'secret': config('SOCIALACCOUNT_PROVIDERS_GOOGLE_SECRET', default=''),
+            'client_id': config('GOOGLE_CLIENT_ID', default=''),
+            'secret': config('GOOGLE_SECRET', default=''),
             'key': ''
         },
         'SCOPE': [
@@ -183,11 +215,24 @@ SOCIALACCOUNT_PROVIDERS = {
         'AUTH_PARAMS': {
             'access_type': 'online',
         }
+    },
+    'microsoft': {
+        'APP': {
+            'client_id': config('MICROSOFT_CLIENT_ID', default=''),
+            'secret': config('MICROSOFT_SECRET', default=''),
+        },
+        'SCOPE': [
+            'User.Read',
+        ],
+    },
+    'github': {
+        'APP': {
+            'client_id': config('GITHUB_CLIENT_ID', default=''),
+            'secret': config('GITHUB_SECRET', default=''),
+        },
+        'SCOPE': [
+            'user:email',
+        ],
     }
 }
 
-# Email Configuration
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
-
-# Frontend URL for redirects
-FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')

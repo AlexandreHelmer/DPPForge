@@ -57,6 +57,7 @@ class Company(AbstractUser):
         ('ACTIVE', 'Active'),
         ('PENDING', 'En Attente'),
         ('SUSPENDED', 'Suspendu'),
+        ('DELETED', 'Supprimé'),
     ]
     status = models.CharField(
         max_length=20,
@@ -67,6 +68,33 @@ class Company(AbstractUser):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def anonymize(self):
+        """
+        Anonymize user data to 'delete' the account while keeping related objects.
+        Required for EU DPP compliance (traceability of products).
+        """
+        import uuid
+        unique_id = uuid.uuid4().hex[:8]
+        self.email = f"deleted_{unique_id}@{self.id}.invalid"
+        self.username = self.email
+        self.company_name = "Compte Supprimé"
+        self.company_registration = "N/A"
+        self.first_name = ""
+        self.last_name = ""
+        self.is_active = False
+        self.status = 'DELETED'
+        self.set_unusable_password()
+        
+        # Disconnect social accounts
+        from allauth.socialaccount.models import SocialAccount
+        SocialAccount.objects.filter(user=self).delete()
+        
+        # Remove emails from allauth
+        from allauth.account.models import EmailAddress
+        EmailAddress.objects.filter(user=self).delete()
+        
+        self.save()
     
     # Custom manager
     objects = CompanyManager()

@@ -5,8 +5,14 @@ import { authService } from './services/auth';
 // Styles
 import './styles/custom.scss';
 
+// Auth Components
+import Login from './components/auth/Login';
+import Signup from './components/auth/Signup';
+import VerifyEmail from './components/auth/VerifyEmail';
+import PasswordReset from './components/auth/PasswordReset';
+import PasswordResetConfirm from './components/auth/PasswordResetConfirm';
+
 // Pages
-import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ComponentList from './pages/ComponentList';
 import ProductList from './pages/ProductList';
@@ -54,9 +60,18 @@ function App() {
 
           <main className="content-area" id="main-content" tabIndex="-1">
             <Routes>
-              <Route path="/login" element={<Login />} />
+              {/* Public routes */}
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/signup" element={<Signup />} />
+              <Route path="/auth/verify-email/:key" element={<VerifyEmail />} />
+              <Route path="/auth/password-reset" element={<PasswordReset />} />
+              <Route path="/auth/password-reset/confirm/:uid/:token" element={<PasswordResetConfirm />} />
               <Route path="/twin/:id" element={<PublicProductView />} />
 
+              {/* Legacy login redirect */}
+              <Route path="/login" element={<Navigate to="/auth/login" replace />} />
+
+              {/* Protected routes */}
               <Route path="/dashboard" element={
                 <PrivateRoute>
                   <Dashboard />

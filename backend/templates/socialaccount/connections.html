@@ -1,0 +1,55 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Account Connections" %}{% endblock %}
+
+{% block content %}
+<div class="alert alert-success" role="alert">
+    <h4 class="alert-heading">✓ Connexion réussie !</h4>
+    <p>Votre compte {{ account.get_provider.name }} a été connecté avec succès.</p>
+</div>
+
+<div class="text-center mt-4">
+    <p class="text-muted">Cette fenêtre va se fermer automatiquement...</p>
+    <div class="spinner-border spinner-border-sm text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+    // Fetch the token from the social-token endpoint to refresh user data/token
+    fetch('/api/accounts/social-token/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.token) {
+                // Store/Update in localStorage
+                localStorage.setItem('authToken', data.token);
+                if (data.user) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                }
+
+                // Notify parent
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'oauth_connected', token: data.token }, '*');
+                }
+            }
+
+            // Close after a short delay
+            setTimeout(() => {
+                if (window.opener) {
+                    window.close();
+                } else {
+                    window.location.href = '/settings';
+                }
+            }, 1000);
+        })
+        .catch(err => {
+            console.error('Failed to fetch social token:', err);
+            setTimeout(() => {
+                if (window.opener) window.close();
+            }, 2000);
+        });
+</script>
+{% endblock %}
