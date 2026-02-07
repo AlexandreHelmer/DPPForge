@@ -10,18 +10,14 @@ class CustomPasswordResetForm(PasswordResetForm):
              use_https=False, token_generator=None,
              from_email=None, request=None, html_email_template_name=None,
              extra_email_context=None):
-        """
-        Overridden to use the frontend URL instead of the backend one.
-        """
+        
         if extra_email_context is None:
             extra_email_context = {}
-            
-        # Add frontend_url to context
         extra_email_context['frontend_url'] = settings.FRONTEND_URL.rstrip('/')
         
         # We pass a custom template that uses frontend_url
         email_template_name = 'accounts/email/password_reset_email.html'
-        
+
         return super().save(
             domain_override=domain_override,
             subject_template_name=subject_template_name,
