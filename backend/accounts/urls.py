@@ -1,6 +1,5 @@
 from django.urls import path, include
 from . import views
-from dj_rest_auth.views import PasswordResetConfirmView
 
 urlpatterns = [
     # Social account management

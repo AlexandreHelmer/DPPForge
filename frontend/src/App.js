@@ -65,7 +65,7 @@ function App() {
               <Route path="/auth/signup" element={<Signup />} />
               <Route path="/auth/verify-email/:key" element={<VerifyEmail />} />
               <Route path="/auth/password-reset" element={<PasswordReset />} />
-              <Route path="/auth/password-reset/confirm/:uid/:token" element={<PasswordResetConfirm />} />
+              <Route path="/auth/password-reset/confirm/:key" element={<PasswordResetConfirm />} />
               <Route path="/twin/:id" element={<PublicProductView />} />
 
               {/* Legacy login redirect */}

@@ -33,7 +33,7 @@ const Navbar = () => {
                     className="border-0"
                     aria-label="Se déconnecter"
                 >
-                    <i className="fas fa-sign-out-alt"></i>
+                    <i className="fas fa-right-from-bracket"></i>
                 </Button>
             </div>
         </header>

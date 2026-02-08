@@ -185,8 +185,6 @@ REST_AUTH = {
     'LOGIN_SERIALIZER': 'accounts.serializers.CustomLoginSerializer',
     'PASSWORD_RESET_SERIALIZER': 'accounts.serializers.CustomPasswordResetSerializer',
     'PASSWORD_RESET_CONFIRM_SERIALIZER': 'accounts.serializers.CustomPasswordResetConfirmSerializer',
-    'PASSWORD_RESET_CONFIRM_URL': config('FRONTEND_URL', default='http://localhost:3000') + '/auth/password-reset/confirm/{uid}/{token}',
-    'EMAIL_CONFIRMATION_URL': config('FRONTEND_URL', default='http://localhost:3000') + '/auth/verify-email/{key}',
     'SESSION_LOGIN': False,
 }
 

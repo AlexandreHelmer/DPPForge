@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/auth';
 
 const PasswordResetConfirm = () => {
-    const { uid, token } = useParams();
+    const { key } = useParams();
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ new_password1: '', new_password2: '' });
     const [error, setError] = useState('');
@@ -25,8 +25,7 @@ const PasswordResetConfirm = () => {
 
         try {
             await authService.confirmPasswordReset(
-                uid,
-                token,
+                key, // UID-TOKEN
                 formData.new_password1,
                 formData.new_password2
             );

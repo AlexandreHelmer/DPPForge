@@ -41,7 +41,7 @@ const ListTable = ({
             <div className="mb-3">
                 <InputGroup className="max-w-400">
                     <InputGroup.Text className="bg-white border-end-0">
-                        <i className="fas fa-search text-muted"></i>
+                        <i className="fas fa-magnifying-glass text-muted"></i>
                     </InputGroup.Text>
                     <Form.Control
                         type="text"
@@ -78,7 +78,9 @@ const ListTable = ({
                         ) : (
                             <tr>
                                 <td colSpan={columns.length} className="text-center p-5 text-muted">
-                                    <i className="fas fa-search-minus display-4 mb-3 d-block opacity-25"></i>
+                                    <div className="display-4 mb-3 opacity-25">
+                                        <i className="fas fa-magnifying-glass-minus"></i>
+                                    </div>
                                     {emptyMessage}
                                 </td>
                             </tr>

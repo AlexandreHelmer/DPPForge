@@ -71,7 +71,13 @@ export const authService = {
     },
 
     // Confirm password reset
-    async confirmPasswordReset(uid, token, new_password1, new_password2) {
+    async confirmPasswordReset(key, new_password1, new_password2) {
+        // Allauth 'key' is 'uid-timestamp-hash' (e.g. uid-ts-hash)
+        // We split at the first dash: the first part is UID, the rest is the Token
+        const firstDashIndex = key.indexOf('-');
+        const uid = key.substring(0, firstDashIndex);
+        const token = key.substring(firstDashIndex + 1);
+
         const response = await api.post('/api/auth/password/reset/confirm/', {
             uid,
             token,

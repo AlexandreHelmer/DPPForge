@@ -110,7 +110,7 @@ const Dashboard = () => {
                                 <Badge bg="secondary" className="px-3">{stats.products_by_status.draft}</Badge>
                             </div>
                             <div className="status-item d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
-                                <span><i className="fas fa-check-circle me-2 text-success"></i> Complet</span>
+                                <span><i className="fas fa-circle-check me-2 text-success"></i> Complet</span>
                                 <Badge bg="success" className="px-3">{stats.products_by_status.complete}</Badge>
                             </div>
                             <div className="status-item d-flex justify-content-between align-items-center p-3 bg-light rounded">

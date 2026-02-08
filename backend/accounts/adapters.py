@@ -27,6 +27,13 @@ class CompanyAccountAdapter(DefaultAccountAdapter):
         """
         return f"{settings.FRONTEND_URL}/auth/login?verified=true"
 
+    def get_reset_password_from_key_url(self, key):
+        """
+        Custom URL for password reset email.
+        In Allauth, key is 'uid-token'.
+        """
+        return f"{settings.FRONTEND_URL}/auth/password-reset/confirm/{key}"
+
 
 class CompanySocialAccountAdapter(DefaultSocialAccountAdapter):
     """

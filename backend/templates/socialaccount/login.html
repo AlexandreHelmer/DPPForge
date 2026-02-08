@@ -1,0 +1,29 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Sign In" %}{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h3>Connexion en cours...</h3>
+    <div class="spinner-border text-primary mt-3" role="status">
+        <span class="visually-hidden">Chargement...</span>
+    </div>
+    <p class="text-muted mt-3">Redirection vers {{ provider.name }}...</p>
+
+    <form method="post" id="auto_post_form">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary d-none">Continuer</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+    // Automatically submit if form exists
+    const form = document.getElementById('auto_post_form');
+    if (form) {
+        form.submit();
+    }
+</script>
+{% endblock %}
