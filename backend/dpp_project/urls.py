@@ -26,9 +26,9 @@ urlpatterns = [
     
     # This name must exist for dj-rest-auth/Django to function, 
     # even if Allauth generates the email links directly via the adapter.
-    path('auth/password-reset/confirm/<uidb64>/<token>/', 
-         lambda r, uidb64, token: redirect(f"{settings.FRONTEND_URL}/auth/password-reset/confirm/{uidb64}-{token}"), 
-         name='password_reset_confirm'),
+#    path('auth/password-reset/confirm/<uidb64>/<token>/', 
+#         lambda r, uidb64, token: redirect(f"{settings.FRONTEND_URL}/auth/password-reset/confirm/{uidb64}-{token}"), 
+#         name='password_reset_confirm'),
 ]
 
 # Serve media files in development

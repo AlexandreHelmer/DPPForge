@@ -17,9 +17,6 @@ urlpatterns = [
     path('emails/primary/', views.MakeEmailPrimaryView.as_view(), name='email_primary'),
     path('emails/resend/', views.ResendVerificationView.as_view(), name='email_resend'),
     
-    # Password reset override
-    path('password/reset/confirm/', views.CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm_api'),
-    
     # Include allauth URLs for OAuth callbacks
     path('', include('allauth.socialaccount.urls')),
 ]
