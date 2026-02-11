@@ -30,6 +30,7 @@ import Footer from './components/Footer';
 function App() {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
+  const basePath = process.env.PUBLIC_URL || '/'; // PUBLIC_URL = homepage dans package.json
 
   // Listen for auth changes (manual poll or events)
   useEffect(() => {
@@ -46,7 +47,7 @@ function App() {
   const showSidebar = isAuthenticated;
 
   return (
-    <Router>
+    <Router basename={basePath}>
       <div className="app-wrapper">
         {showSidebar && (
           <Sidebar

@@ -13,10 +13,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='dev-secret-key-please-change')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,localhost:3000', cast=Csv())
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost', cast=Csv())
 
+# Security settings for production
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    X_FRAME_OPTIONS = 'DENY'
+else:
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Application definition
 
@@ -83,14 +95,12 @@ WSGI_APPLICATION = 'dpp_project.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='sqlite:///db.sqlite3'),
-        conn_max_age=600
-    )
-}
-
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': '/data/db.sqlite3',
+    }       
+}    
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -127,10 +137,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = '/django_static/'
 
 MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
