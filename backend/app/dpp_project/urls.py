@@ -14,6 +14,7 @@ urlpatterns = [
     # API endpoints
     path('api/', include('products.urls')),
     path('api/dashboard/', include('dashboard.urls')),
+    path('contact', accounts_views.ContactView.as_view(), name='contact'),
     
     # Authentication with dj-rest-auth
     path('api/auth/password/reset/confirm/', accounts_views.CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm_api'),

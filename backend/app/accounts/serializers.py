@@ -89,3 +89,12 @@ class EmailAddressSerializer(serializers.ModelSerializer):
         model = EmailAddress
         fields = ['id', 'email', 'verified', 'primary']
         read_only_fields = ['verified', 'primary']
+
+
+class ContactSerializer(serializers.Serializer):
+    firstName = serializers.CharField(max_length=255, required=True)
+    lastName = serializers.CharField(max_length=255, required=True)
+    email = serializers.EmailField(required=True)
+    subject = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    message = serializers.CharField(max_length=5000, required=True)
+    company = serializers.CharField(max_length=255, required=False, allow_blank=True)

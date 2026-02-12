@@ -35,6 +35,9 @@ staticfiles/
 .env
 .env.dev
 .env.prod
+env
+env-ovh
+env-dev
 
 # IDEs
 .vscode/

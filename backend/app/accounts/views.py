@@ -4,7 +4,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from allauth.socialaccount.models import SocialAccount
 from .social_serializers import SocialAccountSerializer
-from .serializers import EmailAddressSerializer
+from .serializers import EmailAddressSerializer, ContactSerializer
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 class SocialAccountListView(generics.ListAPIView):
@@ -192,3 +194,36 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     Override to ensure our custom serializer is used.
     """
     serializer_class = CustomPasswordResetConfirmSerializer
+
+
+class ContactView(APIView):
+    """
+    API endpoint to receive contact form submissions and send emails.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = ContactSerializer(data=request.data)
+        if serializer.is_valid():
+            firstName = serializer.validated_data['firstName']
+            lastName = serializer.validated_data['lastName']
+            email = serializer.validated_data['email']
+            subject = serializer.validated_data.get('subject', 'Non précisé')
+            message = serializer.validated_data['message']
+            company = serializer.validated_data.get('company', 'Non précisée')
+
+            full_message = f"Nom: {firstName} {lastName}\nEmail: {email}\nEntreprise: {company}\n\nMessage:\n{message}"
+            
+            try:
+                send_mail(
+                    subject=f"[DPPForge Contact] {subject}",
+                    message=full_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[settings.CONTACT_EMAIL],
+                    fail_silently=False,
+                )
+                return Response({'message': 'Message envoyé avec succès. Nous vous recontacterons bientôt.'})
+            except Exception as e:
+                return Response({'error': f'Erreur lors de l\'envoi de l\'email: {str(e)}'}, status=500)
+        
+        return Response(serializer.errors, status=400)

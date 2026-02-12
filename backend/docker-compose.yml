@@ -3,7 +3,7 @@ services:
   dpp-django:
     build: .
     ports:
-      - "127.0.0.1:8001:8000"
+      - "127.0.0.1:8002:8000"
     volumes:
       - ../django_static:/django_static
       - ../data:/data
