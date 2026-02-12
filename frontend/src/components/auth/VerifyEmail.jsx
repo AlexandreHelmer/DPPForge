@@ -40,8 +40,8 @@ const VerifyEmail = () => {
     }, [key, navigate]);
 
     return (
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
-            <Card style={{ width: '500px' }}>
+        <div className="auth-container">
+            <Card className="auth-card">
                 <Card.Body className="text-center">
                     <h2 className="mb-4">Vérification d'email</h2>
 

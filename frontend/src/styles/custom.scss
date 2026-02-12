@@ -51,10 +51,20 @@ body {
   color: $white;
   position: fixed;
   height: 100vh;
-  z-index: 1000;
+  z-index: 1050; // Above bootstrap navbar
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 1.5rem 1rem;
   overflow-x: hidden;
+
+  // Responsive Sidebar
+  @media (max-width: 991.98px) {
+    transform: translateX(-100%);
+
+    &.mobile-show {
+      transform: translateX(0);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+  }
 
   &.collapsed {
     width: $sidebar-collapsed-width;
@@ -104,12 +114,40 @@ body {
   }
 }
 
+.sidebar-overlay {
+  display: none;
+
+  @media (max-width: 991.98px) {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+
+    &.show {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+}
+
 .main-content {
   flex: 1;
   margin-left: $sidebar-width;
   display: flex;
   flex-direction: column;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0; // Prevent content overflow from breaking layout
+
+  @media (max-width: 991.98px) {
+    margin-left: 0 !important;
+  }
 
   &.collapsed {
     margin-left: $sidebar-collapsed-width;
@@ -126,15 +164,23 @@ body {
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
-  padding: 0 2rem;
+  padding: 0 1.5rem;
   position: sticky;
   top: 0;
   z-index: 999;
+
+  @media (max-width: 575.98px) {
+    padding: 0 1rem;
+  }
 }
 
 .content-area {
   padding: 2rem;
   flex: 1;
+
+  @media (max-width: 767.98px) {
+    padding: 1rem;
+  }
 }
 
 .footer {
@@ -143,6 +189,11 @@ body {
   padding: 2rem;
   color: $secondary;
   font-size: 0.875rem;
+
+  @media (max-width: 767.98px) {
+    padding: 1.5rem 1rem;
+    text-align: center;
+  }
 }
 
 // UI Components
@@ -150,6 +201,75 @@ body {
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   border-radius: 12px;
+}
+
+// Dashboard & Page Headers
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+
+  @media (max-width: 767.98px) {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .header-actions {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .header-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+}
+
+// Stats Cards
+.stat-card {
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+
+  .card-body {
+    @media (max-width: 575.98px) {
+      padding: 1.5rem;
+    }
+  }
+}
+
+// Auth Components
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 1rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 500px;
+  @extend .card;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+
+  .card-body {
+    padding: 2.5rem;
+
+    @media (max-width: 575.98px) {
+      padding: 1.5rem;
+    }
+  }
 }
 
 .btn {

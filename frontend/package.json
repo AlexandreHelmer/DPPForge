@@ -2,8 +2,6 @@
   "name": "dpp-frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/app/",
-  "proxy": "https://api.dppforge.com",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@testing-library/jest-dom": "^5.17.0",

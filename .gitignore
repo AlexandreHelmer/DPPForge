@@ -35,6 +35,7 @@ staticfiles/
 .env
 .env.dev
 .env.prod
+.env.ovh
 env
 env-ovh
 env-dev

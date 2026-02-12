@@ -118,7 +118,9 @@ const DigitalTwins = () => {
 
     return (
         <div className="animate-fade-in">
-            <h1 className="mb-4">Digital Twins Manager</h1>
+            <div className="page-header">
+                <h1 className="mb-0">Digital Twins Manager</h1>
+            </div>
 
             <Card className="mb-5 border-0 shadow-sm">
                 <Card.Header className="bg-white py-3 fw-bold border-bottom-0">Générer de nouveaux Digital Twins</Card.Header>
@@ -127,8 +129,8 @@ const DigitalTwins = () => {
                     {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
                     <Form onSubmit={handleSubmit}>
-                        <div className="row">
-                            <div className="col-md-6">
+                        <div className="row g-3">
+                            <div className="col-lg-6 col-md-12">
                                 <Form.Group className="mb-3">
                                     <Form.Label className="fw-medium small text-muted text-uppercase">Produit (Modèles verrouillés) *</Form.Label>
                                     <Form.Select
@@ -149,7 +151,7 @@ const DigitalTwins = () => {
                                     </Form.Text>
                                 </Form.Group>
                             </div>
-                            <div className="col-md-2">
+                            <div className="col-lg-2 col-md-6">
                                 <Form.Group className="mb-3">
                                     <Form.Label className="fw-medium small text-muted text-uppercase">Quantité *</Form.Label>
                                     <Form.Control
@@ -163,7 +165,7 @@ const DigitalTwins = () => {
                                     />
                                 </Form.Group>
                             </div>
-                            <div className="col-md-4">
+                            <div className="col-lg-4 col-md-6">
                                 <label className="fw-medium small text-muted text-uppercase mb-2">Actions</label>
                                 <Button type="submit" variant="accent" size="lg" className="w-100 text-white shadow-sm" disabled={loading || !formData.product}>
                                     {loading ? 'Génération...' : 'Générer les Digital Twins'}

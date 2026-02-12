@@ -51,8 +51,8 @@ const PasswordResetConfirm = () => {
     };
 
     return (
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
-            <Card style={{ width: '500px' }}>
+        <div className="auth-container">
+            <Card className="auth-card">
                 <Card.Body>
                     <h2 className="text-center mb-4">Nouveau mot de passe</h2>
 

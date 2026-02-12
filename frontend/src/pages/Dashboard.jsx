@@ -50,12 +50,14 @@ const Dashboard = () => {
 
     return (
         <div className="animate-fade-in">
-            <h1 className="mb-4">Tableau de Bord</h1>
+            <div className="page-header">
+                <h1 className="mb-0">Tableau de Bord</h1>
+            </div>
 
             {/* Summary Cards */}
             <Row className="mb-5 g-4">
                 <Col md={3}>
-                    <Card className="text-center h-100 shadow-sm border-0">
+                    <Card className="text-center h-100 shadow-sm border-0 stat-card">
                         <Card.Body className="d-flex flex-column justify-content-center py-4">
                             <div className="display-6 text-primary mb-2 opacity-75">
                                 <i className="fas fa-box"></i>
@@ -66,7 +68,7 @@ const Dashboard = () => {
                     </Card>
                 </Col>
                 <Col md={3}>
-                    <Card className="text-center h-100 shadow-sm border-0">
+                    <Card className="text-center h-100 shadow-sm border-0 stat-card">
                         <Card.Body className="d-flex flex-column justify-content-center py-4">
                             <div className="display-6 text-accent mb-2 opacity-75">
                                 <i className="fas fa-microchip"></i>
@@ -77,7 +79,7 @@ const Dashboard = () => {
                     </Card>
                 </Col>
                 <Col md={3}>
-                    <Card className="text-center h-100 shadow-sm border-0 border-bottom border-primary border-4">
+                    <Card className="text-center h-100 shadow-sm border-0 border-bottom border-primary border-4 stat-card">
                         <Card.Body className="d-flex flex-column justify-content-center py-4">
                             <div className="display-6 text-info mb-2 opacity-75">
                                 <i className="fas fa-qrcode"></i>
@@ -88,7 +90,7 @@ const Dashboard = () => {
                     </Card>
                 </Col>
                 <Col md={3}>
-                    <Card className="text-center h-100 shadow-sm bg-success text-white border-0">
+                    <Card className="text-center h-100 shadow-sm bg-success text-white border-0 stat-card">
                         <Card.Body className="d-flex flex-column justify-content-center py-4">
                             <div className="display-6 mb-2 opacity-75">
                                 <i className="fas fa-check-double"></i>

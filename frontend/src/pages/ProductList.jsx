@@ -141,18 +141,19 @@ const ProductList = () => {
 
     return (
         <div className="animate-fade-in">
-            <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="page-header">
                 <div>
-                    <h1>Catalogue Produits</h1>
-                    <p className="text-muted">Gérez vos modèles et accédez au Digital Product Passport.</p>
+                    <h1 className="mb-0">Catalogue Produits</h1>
+                    <p className="text-muted mb-0">Gérez vos modèles et accédez au Digital Product Passport.</p>
                 </div>
-                <div className="d-flex gap-3 align-items-center">
+                <div className="header-actions">
                     <Form.Check
                         type="switch"
                         id="show-archived"
                         label="Voir les archives"
                         checked={showArchived}
                         onChange={(e) => setShowArchived(e.target.checked)}
+                        className="mb-0"
                     />
                     <Button as={Link} to="/products/new" variant="accent" className="text-white shadow-sm">
                         <i className="fas fa-plus me-1"></i> Nouveau Produit

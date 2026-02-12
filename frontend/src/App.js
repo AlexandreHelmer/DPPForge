@@ -29,6 +29,7 @@ import Footer from './components/Footer';
 
 function App() {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
   const basePath = process.env.PUBLIC_URL || '/'; // PUBLIC_URL = homepage dans package.json
 
@@ -44,20 +45,36 @@ function App() {
     setSidebarCollapsed(!isSidebarCollapsed);
   };
 
+  const toggleMobileSidebar = () => {
+    setMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
+  const closeMobileSidebar = () => {
+    setMobileSidebarOpen(false);
+  };
+
   const showSidebar = isAuthenticated;
 
   return (
     <Router basename={basePath}>
       <div className="app-wrapper">
         {showSidebar && (
-          <Sidebar
-            isCollapsed={isSidebarCollapsed}
-            onToggle={toggleSidebar}
-          />
+          <>
+            <Sidebar
+              isCollapsed={isSidebarCollapsed}
+              onToggle={toggleSidebar}
+              isMobileOpen={isMobileSidebarOpen}
+              onCloseMobile={closeMobileSidebar}
+            />
+            <div
+              className={`sidebar-overlay ${isMobileSidebarOpen ? 'show' : ''}`}
+              onClick={closeMobileSidebar}
+            ></div>
+          </>
         )}
 
         <div className={`main-content ${isSidebarCollapsed ? 'collapsed' : ''} ${!showSidebar ? 'no-sidebar' : ''}`}>
-          <Navbar />
+          <Navbar onMobileToggle={toggleMobileSidebar} />
 
           <main className="content-area" id="main-content" tabIndex="-1">
             <Routes>

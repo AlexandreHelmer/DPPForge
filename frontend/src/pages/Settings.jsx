@@ -196,7 +196,9 @@ const Settings = () => {
 
     return (
         <div>
-            <h1 className="mb-4">Paramètres du Compte</h1>
+            <div className="page-header">
+                <h1 className="mb-0">Paramètres du Compte</h1>
+            </div>
 
             <Tabs defaultActiveKey="profile" id="settings-tabs" className="mb-3">
                 {/* Profile Tab */}

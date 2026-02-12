@@ -142,14 +142,16 @@ const ComponentList = () => {
 
     return (
         <div className="animate-fade-in">
-            <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="page-header">
                 <div>
-                    <h1>Bibliothèque des Composants</h1>
-                    <p className="text-muted">Gérez les composants et matériaux utilisés dans vos produits.</p>
+                    <h1 className="mb-0">Bibliothèque des Composants</h1>
+                    <p className="text-muted mb-0">Gérez les composants et matériaux utilisés dans vos produits.</p>
                 </div>
-                <Button onClick={() => { resetForm(); setShowModal(true); }} variant="accent" className="text-white shadow-sm">
-                    <i className="fas fa-plus me-1"></i> Ajouter un composant
-                </Button>
+                <div className="header-actions">
+                    <Button onClick={() => { resetForm(); setShowModal(true); }} variant="accent" className="text-white shadow-sm">
+                        <i className="fas fa-plus me-1"></i> Ajouter un composant
+                    </Button>
+                </div>
             </div>
 
             <ListTable
