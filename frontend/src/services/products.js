@@ -98,6 +98,38 @@ export const productsService = {
         const response = await api.get('/api/dashboard/stats/');
         return response.data;
     },
+
+    // Supplier Links (authenticated - brand)
+    async createSupplierLink(data) {
+        const response = await api.post('/api/supplier-links/', data);
+        return response.data;
+    },
+
+    async getSupplierLinks() {
+        const response = await api.get('/api/supplier-links/');
+        return response.data;
+    },
+
+    async revokeSupplierLink(id) {
+        const response = await api.post(`/api/supplier-links/${id}/revoke/`);
+        return response.data;
+    },
+
+    // Supplier Links (public - supplier)
+    async getPublicSupplierLink(token) {
+        const response = await api.get(`/api/public/supplier/${token}/`);
+        return response.data;
+    },
+
+    async verifySupplierPassword(token, password) {
+        const response = await api.post(`/api/public/supplier/${token}/verify-password/`, { password });
+        return response.data;
+    },
+
+    async submitSupplierData(token, data) {
+        const response = await api.post(`/api/public/supplier/${token}/submit/`, data);
+        return response.data;
+    },
 };
 
 export default productsService;

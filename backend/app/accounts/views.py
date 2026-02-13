@@ -185,6 +185,8 @@ class ResendVerificationView(APIView):
             email_obj.send_confirmation(request)
             return Response({'message': f'Email de vérification renvoyé à {email_str}'})
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return Response({'error': 'Erreur lors de l\'envoi'}, status=500)
 from dj_rest_auth.views import PasswordResetConfirmView
 from .serializers import CustomPasswordResetConfirmSerializer

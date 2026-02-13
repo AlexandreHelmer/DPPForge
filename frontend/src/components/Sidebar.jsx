@@ -37,6 +37,10 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen, onCloseMobile }) => {
                     <i className="fas fa-qrcode fw-fixed"></i>
                     <span>Digital Twins</span>
                 </Nav.Link>
+                <Nav.Link as={NavLink} to="/supplier-links" title="Liens Fournisseurs" onClick={onCloseMobile}>
+                    <i className="fas fa-link fw-fixed"></i>
+                    <span>Liens Fournisseurs</span>
+                </Nav.Link>
 
                 <div className="mt-auto">
                     <Nav.Link as={NavLink} to="/settings" title="Paramètres" onClick={onCloseMobile}>

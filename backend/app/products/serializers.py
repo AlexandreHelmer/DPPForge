@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Component, Product, ProductInstance
+from .models import Component, Product, ProductInstance, SupplierLink
 
 
 class ComponentSerializer(serializers.ModelSerializer):
@@ -13,9 +13,10 @@ class ComponentSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'company', 'company_name', 'name', 'description',
             'manufacturer', 'material_composition', 'certifications',
-            'origin_country', 'gtin', 'created_at', 'updated_at'
+            'origin_country', 'gtin', 'supplier_validated', 'supplier_locked',
+            'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'company', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'company', 'supplier_validated', 'supplier_locked', 'created_at', 'updated_at']
         extra_kwargs = {
             'description': {'required': False},
             'manufacturer': {'required': False},
@@ -181,3 +182,100 @@ class PublicProductInstanceSerializer(serializers.ModelSerializer):
             'json_ld': obj.product.json_ld,
             'components': ComponentSerializer(obj.product.components.all(), many=True).data
         }
+
+
+class SupplierLinkSerializer(serializers.ModelSerializer):
+    """
+    Serializer for brand-facing SupplierLink CRUD.
+    """
+    component_name = serializers.CharField(source='component.name', read_only=True)
+    is_valid = serializers.BooleanField(read_only=True)
+    is_password_protected = serializers.BooleanField(read_only=True)
+    link_url = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SupplierLink
+        fields = [
+            'id', 'token', 'component', 'component_name',
+            'is_password_protected', 'is_valid', 'link_url', 'status',
+            'expires_at', 'is_revoked', 'supplier_email',
+            'created_at', 'submitted_at'
+        ]
+        read_only_fields = [
+            'id', 'token', 'is_revoked',
+            'created_at', 'submitted_at'
+        ]
+
+    def get_link_url(self, obj):
+        from django.conf import settings
+        return f"{settings.FRONTEND_URL}/supplier/{obj.token}"
+
+    def get_status(self, obj):
+        from django.utils import timezone
+        if obj.submitted_at:
+            return 'submitted'
+        if obj.is_revoked:
+            return 'revoked'
+        if obj.expires_at < timezone.now():
+            return 'expired'
+        return 'active'
+
+
+class SupplierLinkCreateSerializer(serializers.Serializer):
+    """
+    Serializer for creating a supplier link.
+    """
+    component = serializers.PrimaryKeyRelatedField(queryset=Component.objects.all())
+    password = serializers.CharField(required=False, allow_blank=True, write_only=True)
+    expires_in_days = serializers.IntegerField(min_value=1, max_value=90, default=7)
+    supplier_email = serializers.EmailField(required=False, allow_blank=True)
+
+    def create(self, validated_data):
+        from django.utils import timezone
+        from datetime import timedelta
+        import secrets
+
+        component = validated_data['component']
+        password = validated_data.get('password', '')
+        expires_in_days = validated_data.get('expires_in_days', 7)
+        supplier_email = validated_data.get('supplier_email', '')
+
+        link = SupplierLink(
+            token=secrets.token_urlsafe(32),
+            component=component,
+            company=self.context['request'].user,
+            expires_at=timezone.now() + timedelta(days=expires_in_days),
+            supplier_email=supplier_email or None,
+        )
+
+        if password:
+            link.set_password(password)
+
+        link.save()
+        return link
+
+
+class SupplierLinkPublicSerializer(serializers.Serializer):
+    """
+    Public serializer — returned when supplier accesses the magic link.
+    Shows component info + brand name, no sensitive data.
+    """
+    component_name = serializers.CharField()
+    company_name = serializers.CharField()
+    is_password_protected = serializers.BooleanField()
+    fields_to_fill = serializers.DictField()
+
+
+class SupplierSubmitSerializer(serializers.Serializer):
+    """
+    Validates supplier-submitted data for a component.
+    """
+    name = serializers.CharField(max_length=255, required=False)
+    description = serializers.CharField(required=False, allow_blank=True)
+    manufacturer = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    material_composition = serializers.JSONField(required=False)
+    certifications = serializers.JSONField(required=False)
+    origin_country = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    gtin = serializers.CharField(max_length=14, required=False, allow_blank=True)
+    supplier_email = serializers.EmailField(required=False, allow_blank=True)

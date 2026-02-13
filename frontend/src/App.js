@@ -20,6 +20,8 @@ import ProductForm from './pages/ProductForm';
 import Settings from './pages/Settings';
 import DigitalTwins from './pages/DigitalTwins';
 import PublicProductView from './pages/PublicProductView';
+import SupplierLinks from './pages/SupplierLinks';
+import SupplierForm from './pages/SupplierForm';
 
 // Components
 import Navbar from './components/Navbar';
@@ -85,6 +87,7 @@ function App() {
               <Route path="/auth/password-reset" element={<PasswordReset />} />
               <Route path="/auth/password-reset/confirm/:key" element={<PasswordResetConfirm />} />
               <Route path="/twin/:id" element={<PublicProductView />} />
+              <Route path="/supplier/:token" element={<SupplierForm />} />
 
               {/* Legacy login redirect */}
               <Route path="/login" element={<Navigate to="/auth/login" replace />} />
@@ -129,6 +132,12 @@ function App() {
               <Route path="/qr-generator" element={
                 <PrivateRoute>
                   <DigitalTwins />
+                </PrivateRoute>
+              } />
+
+              <Route path="/supplier-links" element={
+                <PrivateRoute>
+                  <SupplierLinks />
                 </PrivateRoute>
               } />
 

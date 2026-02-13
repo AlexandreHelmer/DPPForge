@@ -45,6 +45,16 @@ class Component(models.Model):
         help_text='Global Trade Item Number'
     )
     
+    # Supplier validation
+    supplier_validated = models.BooleanField(
+        default=False,
+        verbose_name='Validé par le fournisseur'
+    )
+    supplier_locked = models.BooleanField(
+        default=False,
+        verbose_name='Verrouillé (fournisseur)'
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -286,3 +296,100 @@ class ProductInstance(models.Model):
         self.qr_code.save(filename, File(buffer), save=False)
         
         return self.qr_code
+
+
+class SupplierLink(models.Model):
+    """
+    A magic link sent to a supplier to fill in component information.
+    No account required — the supplier accesses via a unique token URL.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    token = models.CharField(
+        max_length=64,
+        unique=True,
+        db_index=True,
+        verbose_name='Token'
+    )
+    
+    component = models.ForeignKey(
+        Component,
+        on_delete=models.CASCADE,
+        related_name='supplier_links',
+        verbose_name='Composant'
+    )
+    company = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='supplier_links',
+        verbose_name='Entreprise'
+    )
+    
+    # Optional password protection
+    password_hash = models.CharField(
+        max_length=256,
+        blank=True,
+        null=True,
+        verbose_name='Hash du mot de passe'
+    )
+    
+    # Validity
+    expires_at = models.DateTimeField(verbose_name='Date d\'expiration')
+    is_revoked = models.BooleanField(default=False, verbose_name='Révoqué')
+    
+    # Supplier info
+    supplier_email = models.EmailField(
+        blank=True,
+        null=True,
+        verbose_name='Email du fournisseur'
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Date de soumission'
+    )
+    
+    class Meta:
+        verbose_name = 'Lien fournisseur'
+        verbose_name_plural = 'Liens fournisseur'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Lien pour {self.component.name} ({self.token[:8]}...)"
+    
+    def save(self, *args, **kwargs):
+        if not self.token:
+            import secrets
+            self.token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
+    
+    def set_password(self, raw_password):
+        """Hash and store a password."""
+        from django.contrib.auth.hashers import make_password
+        self.password_hash = make_password(raw_password)
+    
+    def check_password(self, raw_password):
+        """Check a password against the stored hash."""
+        from django.contrib.auth.hashers import check_password
+        if not self.password_hash:
+            return True  # No password set
+        return check_password(raw_password, self.password_hash)
+    
+    @property
+    def is_password_protected(self):
+        return bool(self.password_hash)
+    
+    @property
+    def is_valid(self):
+        """Check if the link is still valid (not expired, not revoked, not submitted)."""
+        from django.utils import timezone
+        if self.is_revoked:
+            return False
+        if self.submitted_at:
+            return False
+        if self.expires_at < timezone.now():
+            return False
+        return True
+

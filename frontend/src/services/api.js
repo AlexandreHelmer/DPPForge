@@ -13,10 +13,11 @@ const api = axios.create({
 // Add auth token to requests
 api.interceptors.request.use(
     (config) => {
-        // Don't add token for login/signup/resend-verification
+        // Don't add token for login/signup/resend-verification/public supplier
         const isPublicEndpont = config.url.includes('/login/') ||
             config.url.includes('/signup/') ||
-            config.url.includes('/resend-verification/');
+            config.url.includes('/resend-verification/') ||
+            config.url.includes('/public/supplier/');
 
         const token = localStorage.getItem('authToken');
         if (token && !isPublicEndpont) {
