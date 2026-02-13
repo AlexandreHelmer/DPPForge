@@ -10,9 +10,15 @@ const ComponentList = () => {
         name: '',
         description: '',
         manufacturer: '',
+        material_composition: {},
+        certifications: [],
         origin_country: '',
         gtin: '',
     });
+
+    const [newMaterial, setNewMaterial] = useState('');
+    const [newPercent, setNewPercent] = useState('');
+    const [newCert, setNewCert] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -69,15 +75,18 @@ const ComponentList = () => {
         }
     };
 
-    const handleEdit = (component) => {
+    const handleEdit = (comp) => {
+        setEditingId(comp.id);
         setFormData({
-            name: component.name,
-            description: component.description || '',
-            manufacturer: component.manufacturer || '',
-            origin_country: component.origin_country || '',
-            gtin: component.gtin || '',
+            name: comp.name || '',
+            description: comp.description || '',
+            manufacturer: comp.manufacturer || '',
+            material_composition: comp.material_composition || {},
+            certifications: comp.certifications || [],
+            origin_country: comp.origin_country || '',
+            gtin: comp.gtin || '',
         });
-        setEditingId(component.id);
+        setError('');
         setShowModal(true);
     };
 
@@ -94,15 +103,59 @@ const ComponentList = () => {
     };
 
     const resetForm = () => {
+        setEditingId(null);
         setFormData({
             name: '',
             description: '',
             manufacturer: '',
+            material_composition: {},
+            certifications: [],
             origin_country: '',
             gtin: '',
         });
-        setEditingId(null);
+        setNewMaterial('');
+        setNewPercent('');
+        setNewCert('');
         setError('');
+    };
+
+    // Material composition management
+    const addMaterial = () => {
+        if (newMaterial && newPercent) {
+            setFormData({
+                ...formData,
+                material_composition: {
+                    ...formData.material_composition,
+                    [newMaterial]: parseInt(newPercent)
+                }
+            });
+            setNewMaterial('');
+            setNewPercent('');
+        }
+    };
+
+    const removeMaterial = (mat) => {
+        const updated = { ...formData.material_composition };
+        delete updated[mat];
+        setFormData({ ...formData, material_composition: updated });
+    };
+
+    // Certifications management
+    const addCertification = () => {
+        if (newCert && !formData.certifications.includes(newCert)) {
+            setFormData({
+                ...formData,
+                certifications: [...formData.certifications, newCert]
+            });
+            setNewCert('');
+        }
+    };
+
+    const removeCertification = (cert) => {
+        setFormData({
+            ...formData,
+            certifications: formData.certifications.filter(c => c !== cert)
+        });
     };
 
     // Supplier link handlers
@@ -151,7 +204,12 @@ const ComponentList = () => {
                                 <i className="fas fa-check-circle"></i> Validé fournisseur
                             </Badge>
                         )}
-                        {item.supplier_locked && (
+                        {item.is_brand_locked && (
+                            <Badge bg="info" className="d-inline-flex align-items-center gap-1" style={{ fontSize: '0.7rem' }}>
+                                <i className="fas fa-shield-halved"></i> Validé par la marque
+                            </Badge>
+                        )}
+                        {(item.supplier_locked || item.is_brand_locked) && (
                             <Badge bg="secondary" style={{ fontSize: '0.65rem' }}>
                                 <i className="fas fa-lock"></i>
                             </Badge>
@@ -182,37 +240,44 @@ const ComponentList = () => {
             header: 'Actions',
             key: 'id',
             className: 'text-end px-4',
-            render: (id, item) => (
-                <div className="d-flex justify-content-end gap-1">
-                    {!item.supplier_locked && (
-                        <>
-                            <Button
-                                size="sm"
-                                variant="link"
-                                className="text-accent text-decoration-none fw-bold"
-                                onClick={() => handleEdit(item)}
-                            >
-                                Modifier
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="link"
-                                className="text-primary text-decoration-none"
-                                onClick={() => openSupplierModal(item)}
-                                title="Demander les infos au fournisseur"
-                            >
-                                <i className="fas fa-link me-1"></i>Fournisseur
-                            </Button>
-                            <Button size="sm" variant="link" className="text-danger text-decoration-none" onClick={() => handleDelete(id)}>
-                                <i className="fas fa-trash-can"></i>
-                            </Button>
-                        </>
-                    )}
-                    {item.supplier_locked && (
-                        <span className="text-muted small fst-italic">Verrouillé</span>
-                    )}
-                </div>
-            )
+            render: (id, item) => {
+                const isLocked = item.supplier_locked || item.is_brand_locked;
+                return (
+                    <div className="d-flex justify-content-end gap-1">
+                        <Button
+                            size="sm"
+                            variant="link"
+                            className={`${isLocked ? 'text-primary' : 'text-accent'} text-decoration-none fw-bold`}
+                            onClick={() => handleEdit(item)}
+                        >
+                            {isLocked ? 'Consulter' : 'Modifier'}
+                        </Button>
+
+                        {!isLocked && (
+                            <>
+                                <Button
+                                    size="sm"
+                                    variant="link"
+                                    className="text-primary text-decoration-none"
+                                    onClick={() => openSupplierModal(item)}
+                                    title="Demander les infos au fournisseur"
+                                >
+                                    <i className="fas fa-link me-1"></i>Fournisseur
+                                </Button>
+                                <Button size="sm" variant="link" className="text-danger text-decoration-none" onClick={() => handleDelete(id)}>
+                                    <i className="fas fa-trash-can"></i>
+                                </Button>
+                            </>
+                        )}
+
+                        {isLocked && (
+                            <span className="text-muted d-flex align-items-center ms-2" title="Ce composant est verrouillé">
+                                <i className="fas fa-lock small"></i>
+                            </span>
+                        )}
+                    </div>
+                );
+            }
         }
     ];
 
@@ -249,11 +314,24 @@ const ComponentList = () => {
             {/* Component edit/create modal */}
             <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
                 <Modal.Header closeButton className="border-0 pb-0">
-                    <Modal.Title className="fw-bold">{editingId ? 'Modifier' : 'Nouveau'} Composant</Modal.Title>
+                    <Modal.Title className="fw-bold">
+                        {editingId ? (
+                            (components.find(c => c.id === editingId)?.supplier_locked ||
+                                components.find(c => c.id === editingId)?.is_brand_locked)
+                                ? 'Consulter le composant' : 'Modifier le composant'
+                        ) : 'Nouveau Composant'}
+                    </Modal.Title>
                 </Modal.Header>
                 <Modal.Body className="pt-4">
                     {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
                     <Form onSubmit={handleSubmit}>
+                        {editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                            components.find(c => c.id === editingId)?.is_brand_locked) && (
+                                <Alert variant="info" className="d-flex align-items-center gap-2 mb-4">
+                                    <i className="fas fa-info-circle"></i>
+                                    <span>Ce composant est en lecture seule car il a été validé.</span>
+                                </Alert>
+                            )}
                         <Form.Group className="mb-4">
                             <Form.Label className="fw-medium">Désignation *</Form.Label>
                             <Form.Control
@@ -262,6 +340,8 @@ const ComponentList = () => {
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 required
                                 placeholder="Ex: Module de commande électronique v4"
+                                readOnly={editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                    components.find(c => c.id === editingId)?.is_brand_locked)}
                             />
                         </Form.Group>
 
@@ -272,6 +352,8 @@ const ComponentList = () => {
                                 rows={2}
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                readOnly={editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                    components.find(c => c.id === editingId)?.is_brand_locked)}
                             />
                         </Form.Group>
 
@@ -284,6 +366,8 @@ const ComponentList = () => {
                                         value={formData.manufacturer}
                                         onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
                                         placeholder="Nom de l'entité"
+                                        readOnly={editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                            components.find(c => c.id === editingId)?.is_brand_locked)}
                                     />
                                 </Form.Group>
                             </div>
@@ -295,6 +379,8 @@ const ComponentList = () => {
                                         value={formData.origin_country}
                                         onChange={(e) => setFormData({ ...formData, origin_country: e.target.value })}
                                         placeholder="Ex: France"
+                                        readOnly={editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                            components.find(c => c.id === editingId)?.is_brand_locked)}
                                     />
                                 </Form.Group>
                             </div>
@@ -308,16 +394,101 @@ const ComponentList = () => {
                                 onChange={(e) => setFormData({ ...formData, gtin: e.target.value })}
                                 maxLength={14}
                                 placeholder="Code barres à 14 chiffres"
+                                readOnly={editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                    components.find(c => c.id === editingId)?.is_brand_locked)}
                             />
+                        </Form.Group>
+
+                        {/* Material Composition */}
+                        <Form.Group className="mb-4">
+                            <Form.Label className="fw-medium">Composition matérielle (%)</Form.Label>
+                            {Object.keys(formData.material_composition).length > 0 && (
+                                <div className="mb-2">
+                                    {Object.entries(formData.material_composition).map(([mat, pct]) => (
+                                        <span key={mat} className="selected-chip">
+                                            {mat}: {pct}%
+                                            {!(editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                                components.find(c => c.id === editingId)?.is_brand_locked)) && (
+                                                    <span className="remove-btn" onClick={() => removeMaterial(mat)}>×</span>
+                                                )}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            {!(editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                components.find(c => c.id === editingId)?.is_brand_locked)) && (
+                                    <div className="d-flex gap-2">
+                                        <Form.Control
+                                            type="text"
+                                            placeholder="Matériau (ex: coton)"
+                                            value={newMaterial}
+                                            onChange={(e) => setNewMaterial(e.target.value)}
+                                            size="sm"
+                                        />
+                                        <Form.Control
+                                            type="number"
+                                            placeholder="%"
+                                            value={newPercent}
+                                            onChange={(e) => setNewPercent(e.target.value)}
+                                            size="sm"
+                                            style={{ width: '80px' }}
+                                            min={0}
+                                            max={100}
+                                        />
+                                        <Button variant="outline-primary" size="sm" onClick={addMaterial} type="button">
+                                            <i className="fas fa-plus"></i>
+                                        </Button>
+                                    </div>
+                                )}
+                        </Form.Group>
+
+                        {/* Certifications */}
+                        <Form.Group className="mb-4">
+                            <Form.Label className="fw-medium">Certifications</Form.Label>
+                            {formData.certifications.length > 0 && (
+                                <div className="mb-2">
+                                    {formData.certifications.map(cert => (
+                                        <span key={cert} className="selected-chip">
+                                            {cert}
+                                            {!(editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                                components.find(c => c.id === editingId)?.is_brand_locked)) && (
+                                                    <span className="remove-btn" onClick={() => removeCertification(cert)}>×</span>
+                                                )}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            {!(editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                components.find(c => c.id === editingId)?.is_brand_locked)) && (
+                                    <div className="d-flex gap-2">
+                                        <Form.Control
+                                            type="text"
+                                            placeholder="Ex: CE, RoHS"
+                                            value={newCert}
+                                            onChange={(e) => setNewCert(e.target.value)}
+                                            size="sm"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') { e.preventDefault(); addCertification(); }
+                                            }}
+                                        />
+                                        <Button variant="outline-primary" size="sm" onClick={addCertification} type="button">
+                                            <i className="fas fa-plus"></i>
+                                        </Button>
+                                    </div>
+                                )}
                         </Form.Group>
 
                         <div className="d-flex justify-content-end mt-4 pt-3 border-top gap-2">
                             <Button variant="light" onClick={() => setShowModal(false)}>
-                                Annuler
+                                {editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                    components.find(c => c.id === editingId)?.is_brand_locked) ? 'Fermer' : 'Annuler'}
                             </Button>
-                            <Button type="submit" variant="primary" disabled={loading} className="px-5 shadow-sm">
-                                {loading ? 'Enregistrement...' : 'Sauvegarder'}
-                            </Button>
+                            {!(editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
+                                components.find(c => c.id === editingId)?.is_brand_locked)) && (
+                                    <Button type="submit" variant="primary" disabled={loading} className="px-5 shadow-sm">
+                                        {loading ? 'Enregistrement...' : 'Sauvegarder'}
+                                    </Button>
+                                )}
                         </div>
                     </Form>
                 </Modal.Body>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Button, Alert } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import { productsService } from '../services/products';
 import ListTable from '../components/ListTable';
 
@@ -84,20 +85,35 @@ const DigitalTwins = () => {
             render: (val) => val || <span className="text-muted opacity-50">-</span>
         },
         {
-            header: 'QR Code',
-            key: 'qr_code',
-            render: (val, item) => (
-                val ? (
-                    <a
-                        href={val}
+            header: 'Actions',
+            key: 'id',
+            className: 'text-end px-4',
+            render: (id, item) => (
+                <div className="d-flex justify-content-end gap-2">
+                    {item.qr_code && (
+                        <a
+                            href={item.qr_code}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-outline-primary py-0 px-2 d-inline-flex align-items-center"
+                            aria-label={`Télécharger le QR code pour ${item.serial_number}`}
+                            title="Télécharger le QR Code"
+                        >
+                            <i className="fas fa-download me-1"></i> QR
+                        </a>
+                    )}
+                    <Button
+                        as={Link}
+                        to={`/twin/${id}`}
                         target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-sm btn-outline-primary py-0 px-2"
-                        aria-label={`Télécharger le QR code pour ${item.serial_number}`}
+                        variant="link"
+                        className="btn btn-sm text-decoration-none fw-bold p-0 d-inline-flex align-items-center"
+                        style={{ color: '#3b82f6' }}
+                        title="Voir la page consommateur"
                     >
-                        <i className="fas fa-download me-1"></i> QR
-                    </a>
-                ) : '-'
+                        <i className="fa-solid fa-eye me-1"></i> Visualiser
+                    </Button>
+                </div>
             )
         },
         {

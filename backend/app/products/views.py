@@ -127,6 +127,10 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
         product.status = 'LOCKED'
         product.save()
+        
+        # Physically lock all related components
+        product.components.all().update(supplier_locked=True)
+        
         return Response({'message': 'Produit verrouillé', 'status': product.status})
 
 
@@ -260,6 +264,13 @@ class SupplierLinkViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Don't allow link creation for already brand-locked components
+        if component.products.filter(status='LOCKED').exists():
+            return Response(
+                {'error': 'Ce composant est verrouillé car il est utilisé dans un produit validé par la marque.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         link = serializer.save()
         return Response(
             SupplierLinkSerializer(link).data,
@@ -295,9 +306,24 @@ class PublicSupplierLinkView(APIView):
                 {'error': 'Ce lien a été révoqué.', 'reason': 'revoked'},
                 status=status.HTTP_410_GONE
             )
+
+        # Unified lock: check if component is already locked (even by another link or by the brand)
+        if link.component.supplier_locked:
+            return None, Response(
+                {'error': 'Ce composant est déjà verrouillé.', 'reason': 'locked'},
+                status=status.HTTP_410_GONE
+            )
+
         if link.expires_at < timezone.now():
             return None, Response(
                 {'error': 'Ce lien a expiré.', 'reason': 'expired'},
+                status=status.HTTP_410_GONE
+            )
+        
+        # Check if the component became locked by brand after link creation
+        if link.component.products.filter(status='LOCKED').exists():
+            return None, Response(
+                {'error': 'Ce composant a été validé par la marque et ne peut plus être modifié.', 'reason': 'locked'},
                 status=status.HTTP_410_GONE
             )
 

@@ -39,7 +39,7 @@ const PublicProductView = () => {
         return (
             <Container className="mt-5">
                 <Alert variant="warning" className="border-0 shadow-sm p-4">
-                    <i className="fas fa-exclamation-triangle me-2"></i>
+                    <i className="fa-solid fa-triangle-exclamation me-2"></i>
                     {error}
                 </Alert>
             </Container>

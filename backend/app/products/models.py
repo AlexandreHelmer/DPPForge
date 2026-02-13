@@ -350,6 +350,7 @@ class SupplierLink(models.Model):
         blank=True,
         verbose_name='Date de soumission'
     )
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = 'Lien fournisseur'

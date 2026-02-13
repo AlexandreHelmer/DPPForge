@@ -92,19 +92,29 @@ const SupplierLinks = () => {
         setError('');
     };
 
-    const getStatusBadge = (statusVal) => {
+    const getStatusBadge = (statusVal, item) => {
         const statusConfig = {
             active: { bg: 'success', label: 'Actif' },
             expired: { bg: 'secondary', label: 'Expiré' },
             revoked: { bg: 'danger', label: 'Révoqué' },
             submitted: { bg: 'primary', label: 'Soumis ✓' },
+            inactive: { bg: 'dark', label: 'Inactif' },
         };
         const cfg = statusConfig[statusVal] || { bg: 'secondary', label: statusVal };
-        return <Badge bg={cfg.bg}>{cfg.label}</Badge>;
+        return (
+            <div>
+                <Badge bg={cfg.bg}>{cfg.label}</Badge>
+                {statusVal === 'active' && item.expires_at && (
+                    <div className="small text-muted mt-1" style={{ fontSize: '0.7rem' }}>
+                        Exp: {new Date(item.expires_at).toLocaleDateString('fr-FR')}
+                    </div>
+                )}
+            </div>
+        );
     };
 
-    // Only show components not yet locked by supplier
-    const availableComponents = components.filter(c => !c.supplier_locked);
+    // Only show components not yet locked (neither by supplier nor by brand)
+    const availableComponents = components.filter(c => !c.supplier_locked && !c.is_brand_locked);
 
     const columns = [
         {
@@ -116,7 +126,7 @@ const SupplierLinks = () => {
         {
             header: 'Statut',
             key: 'status',
-            render: (val) => getStatusBadge(val)
+            render: (val, item) => getStatusBadge(val, item)
         },
         {
             header: 'Protection',
@@ -126,18 +136,28 @@ const SupplierLinks = () => {
                 : <Badge bg="light" className="text-muted border">Ouvert</Badge>
         },
         {
-            header: 'Expiration',
-            key: 'expires_at',
-            render: (val) => new Date(val).toLocaleDateString('fr-FR', {
-                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-            })
-        },
-        {
             header: 'Créé le',
             key: 'created_at',
-            render: (val) => new Date(val).toLocaleDateString('fr-FR', {
-                day: 'numeric', month: 'short', year: 'numeric'
-            })
+            render: (val) => (
+                <div className="small">
+                    <div>{new Date(val).toLocaleDateString('fr-FR')}</div>
+                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                        {new Date(val).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Dernière activité',
+            key: 'updated_at',
+            render: (val) => (
+                <div className="small">
+                    <div className="fw-bold">{new Date(val).toLocaleDateString('fr-FR')}</div>
+                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                        {new Date(val).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                </div>
+            )
         },
         {
             header: 'Actions',

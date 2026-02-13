@@ -320,7 +320,7 @@ const ProductForm = () => {
 
                                     {isLocked && (
                                         <div className="alert alert-info py-2 small border-0">
-                                            <p className="mb-0"><i className="fas fa-circle-check me-1"></i> Ce produit est verrouillé pour assurer l'immuabilité du Passeport Numérique.</p>
+                                            <p className="mb-0"><i className="fa-solid fa-circle-check me-1"></i> Ce produit est verrouillé pour assurer l'immuabilité du Passeport Numérique.</p>
                                             <hr />
                                             <Link to="/qr-generator" className="btn btn-sm btn-primary w-100 shadow-sm">Générer les Digital Twins</Link>
                                         </div>
@@ -344,7 +344,7 @@ const ProductForm = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <div className="text-center mb-4">
-                        <i className="fas fa-triangle-exclamation text-warning display-4 mb-3"></i>
+                        <i className="fa-solid fa-triangle-exclamation text-warning display-4 mb-3"></i>
                         <p className="fw-bold">Cette action est irréversible !</p>
                     </div>
                     <p>Le verrouillage fige les données du produit (Nom, Marque, Composants) pour générer le Passeport Numérique conforme aux réglementations UE.</p>

@@ -7,6 +7,7 @@ class ComponentSerializer(serializers.ModelSerializer):
     Serializer for Component model.
     """
     company_name = serializers.CharField(source='company.company_name', read_only=True)
+    is_brand_locked = serializers.SerializerMethodField()
     
     class Meta:
         model = Component
@@ -14,9 +15,9 @@ class ComponentSerializer(serializers.ModelSerializer):
             'id', 'company', 'company_name', 'name', 'description',
             'manufacturer', 'material_composition', 'certifications',
             'origin_country', 'gtin', 'supplier_validated', 'supplier_locked',
-            'created_at', 'updated_at'
+            'is_brand_locked', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'company', 'supplier_validated', 'supplier_locked', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'company', 'supplier_validated', 'supplier_locked', 'is_brand_locked', 'created_at', 'updated_at']
         extra_kwargs = {
             'description': {'required': False},
             'manufacturer': {'required': False},
@@ -30,6 +31,9 @@ class ComponentSerializer(serializers.ModelSerializer):
         # Auto-assign company from request user
         validated_data['company'] = self.context['request'].user
         return super().create(validated_data)
+
+    def get_is_brand_locked(self, obj):
+        return obj.products.filter(status='LOCKED').exists()
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -200,11 +204,11 @@ class SupplierLinkSerializer(serializers.ModelSerializer):
             'id', 'token', 'component', 'component_name',
             'is_password_protected', 'is_valid', 'link_url', 'status',
             'expires_at', 'is_revoked', 'supplier_email',
-            'created_at', 'submitted_at'
+            'created_at', 'submitted_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'token', 'is_revoked',
-            'created_at', 'submitted_at'
+            'created_at', 'submitted_at', 'updated_at'
         ]
 
     def get_link_url(self, obj):
@@ -217,6 +221,9 @@ class SupplierLinkSerializer(serializers.ModelSerializer):
             return 'submitted'
         if obj.is_revoked:
             return 'revoked'
+        # New check for unified locking: if the component is locked externally, the link is inactive
+        if obj.component.supplier_locked:
+            return 'inactive'
         if obj.expires_at < timezone.now():
             return 'expired'
         return 'active'

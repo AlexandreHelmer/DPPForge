@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button, Form, Alert, Card, Spinner, Badge, Table } from 'react-bootstrap';
+import { Button, Form, Alert, Card, Spinner, Badge, Table, Modal } from 'react-bootstrap';
 import { productsService } from '../services/products';
 
 const SupplierForm = () => {
@@ -15,6 +15,7 @@ const SupplierForm = () => {
     const [passwordError, setPasswordError] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [submittedData, setSubmittedData] = useState(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -91,7 +92,8 @@ const SupplierForm = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
+        setShowConfirmModal(false);
         setSubmitting(true);
         setErrorMessage('');
 
@@ -108,6 +110,12 @@ const SupplierForm = () => {
             setErrorMessage(err.response?.data?.error || 'Erreur lors de l\'envoi des données.');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleFormKeyDown = (e) => {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
         }
     };
 
@@ -155,7 +163,8 @@ const SupplierForm = () => {
             case 'expired': return 'fa-clock';
             case 'revoked': return 'fa-ban';
             case 'submitted': return 'fa-check-circle';
-            default: return 'fa-exclamation-triangle';
+            case 'locked': return 'fa-shield-halved';
+            default: return 'fa-triangle-exclamation';
         }
     };
 
@@ -196,9 +205,9 @@ const SupplierForm = () => {
                     <Card className="shadow-lg border-0" style={{ borderRadius: '16px' }}>
                         <Card.Body className="text-center p-5">
                             <div className="mb-4">
-                                <i className={`fas ${getErrorIcon()} text-danger`} style={{ fontSize: '3rem' }}></i>
+                                <i className={`fa-solid ${getErrorIcon()} text-danger`} style={{ fontSize: '3rem' }}></i>
                             </div>
-                            <h4 className="fw-bold mb-3">Lien invalide</h4>
+                            <h4 className="fw-bold mb-3">Lien inaccessible</h4>
                             <p className="text-muted mb-0">{errorMessage}</p>
                         </Card.Body>
                     </Card>
@@ -255,7 +264,7 @@ const SupplierForm = () => {
 
                             {errorMessage && <Alert variant="danger" dismissible onClose={() => setErrorMessage('')}>{errorMessage}</Alert>}
 
-                            <Form onSubmit={handleSubmit}>
+                            <Form onSubmit={(e) => { e.preventDefault(); setShowConfirmModal(true); }} onKeyDown={handleFormKeyDown}>
                                 <Form.Group className="mb-4">
                                     <Form.Label className="fw-medium">Désignation du composant *</Form.Label>
                                     <Form.Control
@@ -492,6 +501,28 @@ const SupplierForm = () => {
                     </p>
                 </div>
             </div>
+
+            {/* Confirmation Modal */}
+            <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered>
+                <Modal.Header closeButton className="border-0">
+                    <Modal.Title className="fw-bold">Confirmer l'envoi</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="text-center py-4">
+                    <i className="fa-solid fa-triangle-exclamation text-warning mb-3" style={{ fontSize: '3rem' }}></i>
+                    <p className="mb-0">
+                        Êtes-vous sûr de vouloir soumettre ces informations ?<br />
+                        <strong>Le composant sera verrouillé et vous ne pourrez plus le modifier.</strong>
+                    </p>
+                </Modal.Body>
+                <Modal.Footer className="border-0 justify-content-center pb-4">
+                    <Button variant="light" onClick={() => setShowConfirmModal(false)} className="px-4">
+                        Annuler
+                    </Button>
+                    <Button variant="primary" onClick={handleSubmit} className="px-4 shadow-sm">
+                        Oui, envoyer
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 };
