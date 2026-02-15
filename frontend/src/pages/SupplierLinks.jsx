@@ -97,7 +97,7 @@ const SupplierLinks = () => {
             active: { bg: 'success', label: 'Actif' },
             expired: { bg: 'secondary', label: 'Expiré' },
             revoked: { bg: 'danger', label: 'Révoqué' },
-            submitted: { bg: 'primary', label: 'Soumis ✓' },
+            submitted: { bg: 'info', label: 'Soumis ✓' },
             inactive: { bg: 'dark', label: 'Inactif' },
         };
         const cfg = statusConfig[statusVal] || { bg: 'secondary', label: statusVal };
@@ -133,7 +133,7 @@ const SupplierLinks = () => {
             key: 'is_password_protected',
             render: (val) => val
                 ? <Badge bg="warning" className="text-dark"><i className="fas fa-lock me-1"></i>Mot de passe</Badge>
-                : <Badge bg="light" className="text-muted border">Ouvert</Badge>
+                : <Badge bg="success" className="text-dark border">Ouvert</Badge>
         },
         {
             header: 'Créé le',
@@ -167,7 +167,7 @@ const SupplierLinks = () => {
                 <div className="d-flex justify-content-end gap-1">
                     <Button
                         size="sm"
-                        variant="outline-primary"
+                        variant="outline-info"
                         onClick={() => handleCopy(item.link_url, id)}
                         title="Copier le lien"
                     >
@@ -200,8 +200,8 @@ const SupplierLinks = () => {
                 <div className="header-actions">
                     <Button
                         onClick={() => { resetForm(); setShowModal(true); }}
-                        variant="accent"
-                        className="text-white shadow-sm"
+                        variant="outline-info"
+                        className="shadow-sm"
                         disabled={availableComponents.length === 0}
                     >
                         <i className="fas fa-link me-1"></i> Créer un lien fournisseur

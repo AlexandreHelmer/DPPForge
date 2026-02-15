@@ -456,7 +456,7 @@ const Settings = () => {
                                 onChange={toggleTheme}
                                 className="fs-5"
                             />
-                            <div className="mt-4 p-3 bg-light rounded">
+                            <div className="mt-4 p-3 bg-secondary-subtle rounded">
                                 <p className="mb-0 small text-muted">
                                     <strong>Astuce :</strong> Le mode sombre réduit la fatigue oculaire dans les environnements peu éclairés.
                                 </p>

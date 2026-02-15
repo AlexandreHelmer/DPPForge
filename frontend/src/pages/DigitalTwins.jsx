@@ -139,7 +139,7 @@ const DigitalTwins = () => {
             </div>
 
             <Card className="mb-5 border-0 shadow-sm">
-                <Card.Header className="bg-white py-3 fw-bold border-bottom-0">Générer de nouveaux Digital Twins</Card.Header>
+                <Card.Header className="py-3 fw-bold border-bottom-0">Générer de nouveaux Digital Twins</Card.Header>
                 <Card.Body className="pt-0">
                     {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
                     {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}

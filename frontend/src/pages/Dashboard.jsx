@@ -59,11 +59,22 @@ const Dashboard = () => {
                 <Col md={3}>
                     <Card className="text-center h-100 shadow-sm border-0 stat-card">
                         <Card.Body className="d-flex flex-column justify-content-center py-4">
-                            <div className="display-6 text-primary mb-2 opacity-75">
+                            <div className="display-6 text-info mb-2 opacity-75">
                                 <i className="fas fa-box"></i>
                             </div>
                             <h3 className="fw-bold">{stats.summary.total_products}</h3>
                             <Card.Text className="text-muted small text-uppercase tracking-wider">Produits Totaux</Card.Text>
+                        </Card.Body>
+                    </Card>
+                </Col>
+                <Col md={3}>
+                    <Card className="text-center h-100 shadow-sm text-success border-0 stat-card">
+                        <Card.Body className="d-flex flex-column justify-content-center py-4">
+                            <div className="display-6 mb-2 opacity-75">
+                                <i className="fas fa-check-double"></i>
+                            </div>
+                            <h3 className="fw-bold">{stats.summary.complete_products}</h3>
+                            <Card.Text className="small text-uppercase tracking-wider">Produits validés</Card.Text>
                         </Card.Body>
                     </Card>
                 </Col>
@@ -85,18 +96,7 @@ const Dashboard = () => {
                                 <i className="fas fa-qrcode"></i>
                             </div>
                             <h3 className="fw-bold">{stats.summary.total_instances}</h3>
-                            <Card.Text className="text-muted small text-uppercase tracking-wider">Digital Twins</Card.Text>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={3}>
-                    <Card className="text-center h-100 shadow-sm bg-success text-white border-0 stat-card">
-                        <Card.Body className="d-flex flex-column justify-content-center py-4">
-                            <div className="display-6 mb-2 opacity-75">
-                                <i className="fas fa-check-double"></i>
-                            </div>
-                            <h3 className="fw-bold">{stats.summary.complete_products}</h3>
-                            <Card.Text className="small text-uppercase tracking-wider">DPP Prêts</Card.Text>
+                            <Card.Text className="text-muted small text-uppercase tracking-wider">Passeports générés</Card.Text>
                         </Card.Body>
                     </Card>
                 </Col>
@@ -107,15 +107,15 @@ const Dashboard = () => {
                     <Card className="border-0 shadow-sm h-100">
                         <Card.Header className="py-3 fw-bold border-bottom-0">Répartition par Statut</Card.Header>
                         <Card.Body className="pt-0">
-                            <div className="status-item d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                            <div className="status-item d-flex justify-content-between align-items-center mb-3 p-3 bg-light-subtle rounded">
                                 <span><i className="fas fa-file-pen me-2 text-muted"></i> Brouillon</span>
                                 <Badge bg="secondary" className="px-3">{stats.products_by_status.draft}</Badge>
                             </div>
-                            <div className="status-item d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                            <div className="status-item d-flex justify-content-between align-items-center mb-3 p-3 bg-light-subtle rounded">
                                 <span><i className="fas fa-circle-check me-2 text-success"></i> Complet</span>
                                 <Badge bg="success" className="px-3">{stats.products_by_status.complete}</Badge>
                             </div>
-                            <div className="status-item d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <div className="status-item d-flex justify-content-between align-items-center p-3 bg-light-subtle rounded">
                                 <span><i className="fas fa-lock me-2 text-primary"></i> Verrouillé (DPP)</span>
                                 <Badge bg="primary" className="px-3">{stats.products_by_status.locked}</Badge>
                             </div>

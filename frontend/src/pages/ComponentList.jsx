@@ -247,7 +247,7 @@ const ComponentList = () => {
                         <Button
                             size="sm"
                             variant="link"
-                            className={`${isLocked ? 'text-primary' : 'text-accent'} text-decoration-none fw-bold`}
+                            className={`${isLocked ? 'text-muted' : 'text-info'} text-decoration-none fw-bold`}
                             onClick={() => handleEdit(item)}
                         >
                             {isLocked ? 'Consulter' : 'Modifier'}
@@ -258,7 +258,7 @@ const ComponentList = () => {
                                 <Button
                                     size="sm"
                                     variant="link"
-                                    className="text-primary text-decoration-none"
+                                    className="text-warning text-decoration-none"
                                     onClick={() => openSupplierModal(item)}
                                     title="Demander les infos au fournisseur"
                                 >

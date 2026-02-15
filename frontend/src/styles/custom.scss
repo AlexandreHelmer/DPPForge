@@ -1,93 +1,86 @@
 @import "@fortawesome/fontawesome-free/css/all.min.css";
 
-// ---------------------------------------------------------
-// Theme Variables (Token Design System)
-// ---------------------------------------------------------
+// 1. Bootstrap Functions
+@import "bootstrap/scss/functions";
+
+// 2. Light Theme Variables
+$primary: #0F172A;
+$success: #71e089;
+$info: #4daaf7;
+$warning: #db7940;
+$danger: #ef4444;
+$accent: #4daaf7;
+
+$body-bg: #f1f5f9;
+$body-color: #0f172a;
+$card-bg: #ffffff;
+$border-color: #e2e8f0;
+
+$sidebar-width: 260px;
+$sidebar-collapsed-width: 80px;
+$navbar-height: 64px;
+
+// 3. Dark Theme Variables (SASS constants)
+$body-bg-dark: #0f172a;
+$body-color-dark: #f1f5f9;
+$card-bg-dark: #1e293b; // La couleur que tu veux pour tes cards en mode dark
+$border-color-dark: #334155;
+$tertiary-bg-dark: #2d3748;
+
+// 4. Import Bootstrap Core Variables
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/utilities";
+
+// Merge our custom primary into theme-colors
+$theme-colors: map-merge($theme-colors, ("accent": $accent));
+
+// 5. Bootstrap Main Component Imports
+@import "bootstrap/scss/bootstrap";
+
+// 6. Color Mode Overrides (THE BOOTSTRAP 5.3 WAY)
+// On utilise l'attribut standard data-bs-theme
+[data-bs-theme="dark"] {
+  // On surcharge les variables racines
+  --bs-body-bg: #{$body-bg-dark};
+  --bs-body-color: #{$body-color-dark};
+  --bs-border-color: #{$border-color-dark};
+  --bs-tertiary-bg: #{$tertiary-bg-dark};
+
+  // LE FIX POUR LES CARDS : 
+  // Bootstrap définit --bs-card-bg dans .card, donc on doit être plus spécifique
+  .card {
+    --bs-card-bg: #{$card-bg-dark};
+    --bs-card-border-color: #{$border-color-dark};
+    --bs-card-cap-bg: transparent;
+  }
+}
+
+// 7. Custom Design Tokens
 :root {
-  // Light Theme (Default)
-  --bg-app: #f1f5f9;
-  --bg-card: #ffffff;
-  --bg-sidebar: #1e293b;
+  --sidebar-width: #{$sidebar-width};
+  --sidebar-collapsed-width: #{$sidebar-collapsed-width};
+  --navbar-height: #{$navbar-height};
+
+  --bg-sidebar: #{$primary};
   --bg-navbar: #ffffff;
-  --bg-input: #ffffff;
-  --bg-surface-muted: #f8fafc;
-
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-white: #ffffff;
-
-  --border-color: #e2e8f0;
   --accent-color: #3b82f6;
-  --accent-hover: #2563eb;
 
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-
-  // Constants
-  --sidebar-width: 260px;
-  --sidebar-collapsed-width: 80px;
-  --navbar-height: 64px;
-
   --close-filter: none;
 }
 
-[data-theme="dark"] {
-  --bg-app: #0f172a;
-  --bg-card: #1e293b;
+[data-bs-theme="dark"] {
   --bg-sidebar: #0f172a;
   --bg-navbar: #1e293b;
-  --bg-input: #1e293b;
-  --bg-surface-muted: #2d3748;
-
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
-
-  --border-color: #334155;
-  --accent-color: #3b82f6;
-
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
-
   --close-filter: invert(1) grayscale(100%) brightness(200%);
 }
 
-// ---------------------------------------------------------
-// SCSS Variables for Bootstrap Override
-// ---------------------------------------------------------
-$primary: #1e293b;
-$accent: #3b82f6;
-$success: #10b981;
-$danger: #ef4444;
-$warning: #f59e0b;
-
-$theme-colors: (
-  "primary": $primary,
-  "accent": $accent,
-  "success": $success,
-  "info": #6CE0FF,
-  "warning": $warning,
-  "danger": $danger,
-);
-
-@import "bootstrap/scss/bootstrap";
-
-// ---------------------------------------------------------
-// Core Styles & Component Overrides
-// ---------------------------------------------------------
+// 8. Base Layout & Component Refinement
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--bg-app);
-  color: var(--text-main);
-  transition: background-color 0.2s, color 0.2s;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: var(--text-main);
 }
 
 .app-wrapper {
@@ -95,48 +88,24 @@ h6 {
   min-height: 100vh;
 }
 
-// Sidebar
 .sidebar {
   width: var(--sidebar-width);
   background-color: var(--bg-sidebar);
-  color: var(--text-white);
+  color: #ffffff;
   position: fixed;
   height: 100vh;
   z-index: 1050;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
-
-  @media (max-width: 991.98px) {
-    transform: translateX(-100%);
-
-    &.mobile-show {
-      transform: translateX(0);
-    }
-  }
 
   &.collapsed {
     width: var(--sidebar-collapsed-width);
-    padding: 1.5rem 0.5rem;
 
-    .sidebar-brand span {
+    .sidebar-brand span,
+    .nav-link span {
       display: none;
-    }
-
-    .nav-link {
-      justify-content: center;
-      padding: 0.75rem 0;
-
-      span {
-        display: none;
-      }
-
-      i {
-        margin: 0 !important;
-        font-size: 1.25rem;
-      }
     }
   }
 
@@ -144,17 +113,13 @@ h6 {
     color: rgba(255, 255, 255, 0.8);
     border-radius: 8px;
     padding: 0.75rem 1rem;
-    margin-bottom: 0.25rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-weight: 500;
-    transition: all 0.2s;
-    white-space: nowrap;
 
     &:hover,
     &.active {
-      color: var(--text-white);
+      color: #ffffff;
       background-color: rgba(255, 255, 255, 0.1);
     }
 
@@ -162,42 +127,12 @@ h6 {
       background-color: var(--accent-color);
     }
   }
-
-  .nav-submenu {
-    padding-left: 0.75rem;
-    margin-bottom: 0.5rem;
-
-    .nav-link {
-      padding: 0.5rem 1rem;
-      font-size: 0.85rem;
-      opacity: 0.8;
-
-      i {
-        width: 1.25rem;
-        text-align: center;
-        font-size: 0.9rem;
-      }
-    }
-  }
-
-  &.collapsed .nav-submenu {
-    padding-left: 0;
-
-    .nav-link {
-      justify-content: center;
-
-      i {
-        font-size: 1.1rem;
-      }
-    }
-  }
 }
 
 .main-content {
   flex: 1;
   margin-left: var(--sidebar-width);
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background-color: var(--bg-app);
+  background-color: var(--bs-body-bg);
 
   &.collapsed {
     margin-left: var(--sidebar-collapsed-width);
@@ -211,7 +146,7 @@ h6 {
 .top-navbar {
   height: var(--navbar-height);
   background-color: var(--bg-navbar);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--bs-border-color);
   display: flex;
   align-items: center;
   padding: 0 1.5rem;
@@ -222,213 +157,32 @@ h6 {
 
 .content-area {
   padding: 2rem;
-  flex: 1;
 }
 
-// Headers
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: var(--text-main);
-  transition: color 0.2s;
-}
-
-// Cards
+// Component Fixes Finales
 .card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   border-radius: 12px;
-  color: var(--text-main);
 
   .card-header {
-    background-color: transparent !important; // Override any inline bg-white
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-main) !important;
     font-weight: 600;
     padding: 1.25rem 1.5rem;
   }
 }
 
-// Tables
 .table {
-  color: var(--text-main);
-  border-color: var(--border-color);
-
   &> :not(caption)>*>* {
-    background-color: transparent; // Let it inherit from card or app bg
-    color: var(--text-main);
-    border-bottom-color: var(--border-color);
-    box-shadow: inset 0 0 0 9999px var(--bg-card); // Force background in dark mode for striped/hover
+    box-shadow: inset 0 0 0 9999px var(--bs-card-bg);
   }
 
   thead th {
-    background-color: var(--bg-surface-muted) !important;
-    border-color: var(--border-color);
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
+    background-color: var(--bs-tertiary-bg) !important;
     font-weight: 700;
   }
 }
 
-// Form Controls & Inputs
-.form-control,
-.form-select {
-  background-color: var(--bg-input);
-  border-color: var(--border-color);
-  color: var(--text-main);
-
-  &:focus {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.15);
-  }
-
-  &::placeholder {
-    color: var(--text-muted);
-    opacity: 0.8; // Increased opacity for dark mode readability
-  }
-}
-
-// Input Groups (Search areas, etc.)
-.input-group {
-  .input-group-text {
-    background-color: var(--bg-input);
-    border-color: var(--border-color);
-    color: var(--text-muted);
-
-    i {
-      color: var(--text-muted);
-      opacity: 0.8;
-    }
-  }
-}
-
-// Fix Checkboxes & Switches for Dark Mode
-.form-check-input {
-  background-color: var(--bg-input);
-  border-color: var(--border-color);
-
-  &:checked {
-    background-color: var(--accent-color);
-    border-color: var(--accent-color);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
-    border-color: var(--accent-color);
-  }
-}
-
-// Dark Mode Switch Icon
-[data-theme="dark"] .form-switch .form-check-input {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,.25)'/%3e%3c/svg%3e");
-
-  &:checked {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff'/%3e%3c/svg%3e");
-  }
-}
-
-// Modals
-.modal-content {
-  background-color: var(--bg-card);
-  color: var(--text-main);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-
-  .modal-header,
-  .modal-footer {
-    border-color: var(--border-color);
-  }
-
-  .btn-close {
-    filter: var(--close-filter);
-  }
-}
-
-// Tabs
-.nav-tabs {
-  border-bottom-color: var(--border-color);
-
-  .nav-link {
-    color: var(--text-muted);
-    border: none;
-    border-bottom: 2px solid transparent;
-
-    &.active {
-      background: none;
-      color: var(--accent-color);
-      border-bottom: 2px solid var(--accent-color);
-    }
-  }
-}
-
-// ---------------------------------------------------------
-// Badges & Literal Utilities (Stay consistent regardless of theme)
-// ---------------------------------------------------------
-.badge {
-  font-weight: 600;
-
-  &.bg-light {
-    background-color: #f1f5f9 !important;
-    color: #475569 !important;
-    border: 1px solid #e2e8f0;
-  }
-
-  &.bg-dark {
-    background-color: #0f172a !important;
-    color: #ffffff !important;
-  }
-}
-
-// Literal Background Utilities (Force specific background)
-// Important for elements that should NOT flip (like literal labels)
-.bg-light-literal {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-}
-
-.bg-dark-literal {
-  background-color: #0f172a !important;
-  color: #ffffff !important;
-}
-
-// Theme-Aware Background Utilities (Flip based on theme)
-.bg-light {
-  background-color: var(--bg-surface-muted) !important;
-}
-
-.bg-dark {
-  background-color: #0f172a !important;
-  color: #ffffff !important;
-}
-
-// Misc
-.text-muted {
-  color: var(--text-muted) !important;
-}
-
-.selected-chip {
-  background-color: var(--bg-surface-muted);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-}
-
 .footer {
   background-color: var(--bg-navbar);
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--bs-border-color);
   padding: 2rem;
-  color: var(--text-muted);
 }
