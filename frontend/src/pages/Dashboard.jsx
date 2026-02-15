@@ -74,7 +74,7 @@ const Dashboard = () => {
                                 <i className="fas fa-microchip"></i>
                             </div>
                             <h3 className="fw-bold">{stats.summary.total_components}</h3>
-                            <Card.Text className="text-muted small text-uppercase tracking-wider">Composants</Card.Text>
+                            <Card.Text className="text-muted small text-uppercase tracking-wider">Matériaux</Card.Text>
                         </Card.Body>
                     </Card>
                 </Col>

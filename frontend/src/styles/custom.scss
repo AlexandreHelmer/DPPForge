@@ -55,6 +55,8 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 1.5rem 1rem;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 
   // Responsive Sidebar
   @media (max-width: 991.98px) {
@@ -110,6 +112,36 @@ body {
 
     &.active {
       background-color: $accent;
+    }
+  }
+
+  .nav-submenu {
+    padding-left: 1.5rem;
+    margin-bottom: 0.5rem;
+
+    .nav-link {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+
+      i {
+        font-size: 0.875rem;
+      }
+    }
+  }
+
+  &.collapsed {
+    .nav-submenu {
+      padding-left: 0;
+
+      .nav-link {
+        justify-content: center;
+        padding: 0.5rem 0;
+
+        span {
+          display: none;
+        }
+      }
     }
   }
 }

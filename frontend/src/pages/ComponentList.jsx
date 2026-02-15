@@ -287,12 +287,12 @@ const ComponentList = () => {
         <div className="animate-fade-in">
             <div className="page-header">
                 <div>
-                    <h1 className="mb-0">Bibliothèque des Composants</h1>
-                    <p className="text-muted mb-0">Gérez les composants et matériaux utilisés dans vos produits.</p>
+                    <h1 className="mb-0">Matériaux & Composants</h1>
+                    <p className="text-muted mb-0">Gérez les matières premières, pièces et composants de vos fournisseurs.</p>
                 </div>
                 <div className="header-actions">
                     <Button onClick={() => { resetForm(); setShowModal(true); }} variant="accent" className="text-white shadow-sm">
-                        <i className="fas fa-plus me-1"></i> Ajouter un composant
+                        <i className="fas fa-plus me-1"></i> Ajouter un élément
                     </Button>
                 </div>
             </div>
@@ -318,8 +318,8 @@ const ComponentList = () => {
                         {editingId ? (
                             (components.find(c => c.id === editingId)?.supplier_locked ||
                                 components.find(c => c.id === editingId)?.is_brand_locked)
-                                ? 'Consulter le composant' : 'Modifier le composant'
-                        ) : 'Nouveau Composant'}
+                                ? 'Consulter l\'élément' : 'Modifier l\'élément'
+                        ) : 'Nouveau Matériau / Pièce'}
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body className="pt-4">
@@ -498,7 +498,7 @@ const ComponentList = () => {
             <Modal show={showSupplierModal} onHide={() => setShowSupplierModal(false)} centered>
                 <Modal.Header closeButton className="border-0 pb-0">
                     <Modal.Title className="fw-bold">
-                        <i className="fas fa-magic me-2 text-accent"></i>
+                        <i className="fas fa-link me-2 text-accent"></i>
                         Lien fournisseur
                     </Modal.Title>
                 </Modal.Header>

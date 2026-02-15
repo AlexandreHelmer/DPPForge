@@ -195,7 +195,7 @@ const SupplierLinks = () => {
             <div className="page-header">
                 <div>
                     <h1 className="mb-0">Liens Fournisseurs</h1>
-                    <p className="text-muted mb-0">Gérez les liens magiques envoyés à vos fournisseurs pour compléter les informations composants.</p>
+                    <p className="text-muted mb-0">Gérez les liens fournisseurs pour solliciter vos fournisseurs et compléter les informations composants.</p>
                 </div>
                 <div className="header-actions">
                     <Button
@@ -204,7 +204,7 @@ const SupplierLinks = () => {
                         className="text-white shadow-sm"
                         disabled={availableComponents.length === 0}
                     >
-                        <i className="fas fa-magic me-1"></i> Créer un lien magique
+                        <i className="fas fa-link me-1"></i> Créer un lien fournisseur
                     </Button>
                 </div>
             </div>
@@ -226,7 +226,7 @@ const SupplierLinks = () => {
             <Modal show={showModal} onHide={() => setShowModal(false)} centered>
                 <Modal.Header closeButton className="border-0 pb-0">
                     <Modal.Title className="fw-bold">
-                        <i className="fas fa-magic me-2 text-accent"></i>
+                        <i className="fas fa-link me-2 text-accent"></i>
                         Nouveau lien fournisseur
                     </Modal.Title>
                 </Modal.Header>
