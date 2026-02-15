@@ -105,7 +105,7 @@ const Dashboard = () => {
             <Row className="mb-5 g-4">
                 <Col lg={6}>
                     <Card className="border-0 shadow-sm h-100">
-                        <Card.Header className="bg-white py-3 fw-bold border-bottom-0">Répartition par Statut</Card.Header>
+                        <Card.Header className="py-3 fw-bold border-bottom-0">Répartition par Statut</Card.Header>
                         <Card.Body className="pt-0">
                             <div className="status-item d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
                                 <span><i className="fas fa-file-pen me-2 text-muted"></i> Brouillon</span>
@@ -125,7 +125,7 @@ const Dashboard = () => {
 
                 <Col lg={6}>
                     <Card className="border-0 shadow-sm h-100">
-                        <Card.Header className="bg-white py-3 fw-bold border-bottom-0">Performance Digital Twins</Card.Header>
+                        <Card.Header className="py-3 fw-bold border-bottom-0">Performance Digital Twins</Card.Header>
                         <Card.Body className="pt-0">
                             <div className="d-flex justify-content-around text-center mt-3">
                                 <div>

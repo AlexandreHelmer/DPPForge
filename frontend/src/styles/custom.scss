@@ -1,75 +1,124 @@
-// FontAwesome
 @import "@fortawesome/fontawesome-free/css/all.min.css";
 
-// Professional Color Palette
-$primary: #1e293b; // Slate 800
-$accent: #3b82f6; // Blue 500
-$secondary: #64748b; // Slate 500
-$success: #10b981; // Emerald 500
-$danger: #ef4444; // Red 500
-$warning: #f59e0b; // Amber 500
-$light: #f8fafc; // Slate 50
-$white: #ffffff;
-$dark: #0f172a; // Slate 900
+// ---------------------------------------------------------
+// Theme Variables (Token Design System)
+// ---------------------------------------------------------
+:root {
+  // Light Theme (Default)
+  --bg-app: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-sidebar: #1e293b;
+  --bg-navbar: #ffffff;
+  --bg-input: #ffffff;
+  --bg-surface-muted: #f8fafc;
 
-$sidebar-width: 260px;
-$sidebar-collapsed-width: 80px;
-$navbar-height: 64px;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-white: #ffffff;
 
-// Bootstrap Overrides
+  --border-color: #e2e8f0;
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+  // Constants
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 80px;
+  --navbar-height: 64px;
+
+  --close-filter: none;
+}
+
+[data-theme="dark"] {
+  --bg-app: #0f172a;
+  --bg-card: #1e293b;
+  --bg-sidebar: #0f172a;
+  --bg-navbar: #1e293b;
+  --bg-input: #1e293b;
+  --bg-surface-muted: #2d3748;
+
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+
+  --border-color: #334155;
+  --accent-color: #3b82f6;
+
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+
+  --close-filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+// ---------------------------------------------------------
+// SCSS Variables for Bootstrap Override
+// ---------------------------------------------------------
+$primary: #1e293b;
+$accent: #3b82f6;
+$success: #10b981;
+$danger: #ef4444;
+$warning: #f59e0b;
+
 $theme-colors: (
   "primary": $primary,
   "accent": $accent,
-  "secondary": $secondary,
   "success": $success,
-  "info": #0ea5e9,
+  "info": #6CE0FF,
   "warning": $warning,
   "danger": $danger,
-  "light": $light,
-  "dark": $dark
 );
 
-// Import Bootstrap
 @import "bootstrap/scss/bootstrap";
 
-// Global Styles
+// ---------------------------------------------------------
+// Core Styles & Component Overrides
+// ---------------------------------------------------------
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #f1f5f9;
-  color: $dark;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  transition: background-color 0.2s, color 0.2s;
 }
 
-// Layout Components
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--text-main);
+}
+
 .app-wrapper {
   display: flex;
   min-height: 100vh;
 }
 
+// Sidebar
 .sidebar {
-  width: $sidebar-width;
-  background-color: $primary;
-  color: $white;
+  width: var(--sidebar-width);
+  background-color: var(--bg-sidebar);
+  color: var(--text-white);
   position: fixed;
   height: 100vh;
-  z-index: 1050; // Above bootstrap navbar
+  z-index: 1050;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 1.5rem 1rem;
-  overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 
-  // Responsive Sidebar
   @media (max-width: 991.98px) {
     transform: translateX(-100%);
 
     &.mobile-show {
       transform: translateX(0);
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     }
   }
 
   &.collapsed {
-    width: $sidebar-collapsed-width;
+    width: var(--sidebar-collapsed-width);
     padding: 1.5rem 0.5rem;
 
     .sidebar-brand span {
@@ -79,24 +128,23 @@ body {
     .nav-link {
       justify-content: center;
       padding: 0.75rem 0;
-      gap: 0;
+
+      span {
+        display: none;
+      }
 
       i {
         margin: 0 !important;
         font-size: 1.25rem;
       }
-
-      span {
-        display: none;
-      }
     }
   }
 
   .nav-link {
-    color: rgba($white, 0.7);
+    color: rgba(255, 255, 255, 0.8);
     border-radius: 8px;
     padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -106,228 +154,281 @@ body {
 
     &:hover,
     &.active {
-      color: $white;
-      background-color: rgba($white, 0.1);
+      color: var(--text-white);
+      background-color: rgba(255, 255, 255, 0.1);
     }
 
     &.active {
-      background-color: $accent;
+      background-color: var(--accent-color);
     }
   }
 
   .nav-submenu {
-    padding-left: 1.5rem;
+    padding-left: 0.75rem;
     margin-bottom: 0.5rem;
 
     .nav-link {
       padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-      margin-bottom: 0.25rem;
+      font-size: 0.85rem;
+      opacity: 0.8;
 
       i {
-        font-size: 0.875rem;
+        width: 1.25rem;
+        text-align: center;
+        font-size: 0.9rem;
       }
     }
   }
 
-  &.collapsed {
-    .nav-submenu {
-      padding-left: 0;
+  &.collapsed .nav-submenu {
+    padding-left: 0;
 
-      .nav-link {
-        justify-content: center;
-        padding: 0.5rem 0;
+    .nav-link {
+      justify-content: center;
 
-        span {
-          display: none;
-        }
+      i {
+        font-size: 1.1rem;
       }
-    }
-  }
-}
-
-.sidebar-overlay {
-  display: none;
-
-  @media (max-width: 991.98px) {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1040;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s;
-
-    &.show {
-      opacity: 1;
-      visibility: visible;
     }
   }
 }
 
 .main-content {
   flex: 1;
-  margin-left: $sidebar-width;
-  display: flex;
-  flex-direction: column;
+  margin-left: var(--sidebar-width);
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 0; // Prevent content overflow from breaking layout
+  background-color: var(--bg-app);
+
+  &.collapsed {
+    margin-left: var(--sidebar-collapsed-width);
+  }
 
   @media (max-width: 991.98px) {
     margin-left: 0 !important;
   }
-
-  &.collapsed {
-    margin-left: $sidebar-collapsed-width;
-  }
-
-  &.no-sidebar {
-    margin-left: 0;
-  }
 }
 
 .top-navbar {
-  height: $navbar-height;
-  background-color: $white;
-  border-bottom: 1px solid #e2e8f0;
+  height: var(--navbar-height);
+  background-color: var(--bg-navbar);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   padding: 0 1.5rem;
   position: sticky;
   top: 0;
   z-index: 999;
-
-  @media (max-width: 575.98px) {
-    padding: 0 1rem;
-  }
 }
 
 .content-area {
   padding: 2rem;
   flex: 1;
-
-  @media (max-width: 767.98px) {
-    padding: 1rem;
-  }
 }
 
-.footer {
-  background-color: $white;
-  border-top: 1px solid #e2e8f0;
-  padding: 2rem;
-  color: $secondary;
-  font-size: 0.875rem;
-
-  @media (max-width: 767.98px) {
-    padding: 1.5rem 1rem;
-    text-align: center;
-  }
+// Headers
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--text-main);
+  transition: color 0.2s;
 }
 
-// UI Components
+// Cards
 .card {
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   border-radius: 12px;
+  color: var(--text-main);
+
+  .card-header {
+    background-color: transparent !important; // Override any inline bg-white
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main) !important;
+    font-weight: 600;
+    padding: 1.25rem 1.5rem;
+  }
 }
 
-// Dashboard & Page Headers
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  gap: 1rem;
+// Tables
+.table {
+  color: var(--text-main);
+  border-color: var(--border-color);
 
-  @media (max-width: 767.98px) {
-    flex-direction: column;
-    align-items: flex-start;
+  &> :not(caption)>*>* {
+    background-color: transparent; // Let it inherit from card or app bg
+    color: var(--text-main);
+    border-bottom-color: var(--border-color);
+    box-shadow: inset 0 0 0 9999px var(--bg-card); // Force background in dark mode for striped/hover
+  }
 
-    .header-actions {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
+  thead th {
+    background-color: var(--bg-surface-muted) !important;
+    border-color: var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-weight: 700;
+  }
+}
+
+// Form Controls & Inputs
+.form-control,
+.form-select {
+  background-color: var(--bg-input);
+  border-color: var(--border-color);
+  color: var(--text-main);
+
+  &:focus {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.15);
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
+    opacity: 0.8; // Increased opacity for dark mode readability
+  }
+}
+
+// Input Groups (Search areas, etc.)
+.input-group {
+  .input-group-text {
+    background-color: var(--bg-input);
+    border-color: var(--border-color);
+    color: var(--text-muted);
+
+    i {
+      color: var(--text-muted);
+      opacity: 0.8;
     }
   }
+}
 
-  @media (max-width: 575.98px) {
-    .header-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
+// Fix Checkboxes & Switches for Dark Mode
+.form-check-input {
+  background-color: var(--bg-input);
+  border-color: var(--border-color);
+
+  &:checked {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+    border-color: var(--accent-color);
   }
 }
 
-// Stats Cards
-.stat-card {
-  transition: transform 0.2s;
+// Dark Mode Switch Icon
+[data-theme="dark"] .form-switch .form-check-input {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,.25)'/%3e%3c/svg%3e");
 
-  &:hover {
-    transform: translateY(-4px);
-  }
-
-  .card-body {
-    @media (max-width: 575.98px) {
-      padding: 1.5rem;
-    }
+  &:checked {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff'/%3e%3c/svg%3e");
   }
 }
 
-// Auth Components
-.auth-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 80vh;
-  padding: 1rem;
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 500px;
-  @extend .card;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+// Modals
+.modal-content {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
 
-  .card-body {
-    padding: 2.5rem;
+  .modal-header,
+  .modal-footer {
+    border-color: var(--border-color);
+  }
 
-    @media (max-width: 575.98px) {
-      padding: 1.5rem;
+  .btn-close {
+    filter: var(--close-filter);
+  }
+}
+
+// Tabs
+.nav-tabs {
+  border-bottom-color: var(--border-color);
+
+  .nav-link {
+    color: var(--text-muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+
+    &.active {
+      background: none;
+      color: var(--accent-color);
+      border-bottom: 2px solid var(--accent-color);
     }
   }
 }
 
-.btn {
-  border-radius: 8px;
-  font-weight: 500;
-  padding: 0.5rem 1.25rem;
+// ---------------------------------------------------------
+// Badges & Literal Utilities (Stay consistent regardless of theme)
+// ---------------------------------------------------------
+.badge {
+  font-weight: 600;
+
+  &.bg-light {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0;
+  }
+
+  &.bg-dark {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+  }
 }
 
-// Custom select/Autocomplete-like chips
+// Literal Background Utilities (Force specific background)
+// Important for elements that should NOT flip (like literal labels)
+.bg-light-literal {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.bg-dark-literal {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+// Theme-Aware Background Utilities (Flip based on theme)
+.bg-light {
+  background-color: var(--bg-surface-muted) !important;
+}
+
+.bg-dark {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+// Misc
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
 .selected-chip {
-  background-color: #e2e8f0;
+  background-color: var(--bg-surface-muted);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: 20px;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0.25rem;
   font-size: 0.875rem;
+}
 
-  .remove-btn {
-    cursor: pointer;
-    font-weight: bold;
-    color: $danger;
-
-    &:hover {
-      color: darken($danger, 10%);
-    }
-  }
+.footer {
+  background-color: var(--bg-navbar);
+  border-top: 1px solid var(--border-color);
+  padding: 2rem;
+  color: var(--text-muted);
 }

@@ -40,8 +40,8 @@ const ListTable = ({
         <div className="list-table-container">
             <div className="mb-3">
                 <InputGroup className="max-w-400">
-                    <InputGroup.Text className="bg-white border-end-0">
-                        <i className="fas fa-magnifying-glass text-muted"></i>
+                    <InputGroup.Text className="border-end-0">
+                        <i className="fas fa-magnifying-glass"></i>
                     </InputGroup.Text>
                     <Form.Control
                         type="text"

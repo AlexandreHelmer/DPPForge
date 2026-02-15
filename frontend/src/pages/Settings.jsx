@@ -31,6 +31,16 @@ const Settings = () => {
     const [deletePassword, setDeletePassword] = useState('');
     const [deleteLoading, setDeleteLoading] = useState(false);
 
+    // Appearance state
+    const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem('theme') === 'dark');
+
+    const toggleTheme = () => {
+        const newTheme = !isDarkMode ? 'dark' : 'light';
+        setIsDarkMode(!isDarkMode);
+        localStorage.setItem('theme', newTheme);
+        window.dispatchEvent(new Event('themeChange'));
+    };
+
     // Load email addresses and social accounts
     useEffect(() => {
         loadEmailAddresses();
@@ -424,6 +434,32 @@ const Settings = () => {
                                         <FaGithub /> Connecter GitHub
                                     </Button>
                                 )}
+                            </div>
+                        </Card.Body>
+                    </Card>
+                </Tab>
+
+                {/* Social Accounts Tab */}
+                <Tab eventKey="apparence" title="Apparence">
+                    <Card>
+                        <Card.Header>Personnalisation</Card.Header>
+                        <Card.Body>
+                            <h5 className="mb-3">Thème de l'interface</h5>
+                            <p className="text-muted small">
+                                Choisissez entre le mode clair et le mode sombre pour votre confort visuel.
+                            </p>
+                            <Form.Check
+                                type="switch"
+                                id="dark-mode-switch"
+                                label={isDarkMode ? "Mode sombre activé" : "Mode sombre désactivé"}
+                                checked={isDarkMode}
+                                onChange={toggleTheme}
+                                className="fs-5"
+                            />
+                            <div className="mt-4 p-3 bg-light rounded">
+                                <p className="mb-0 small text-muted">
+                                    <strong>Astuce :</strong> Le mode sombre réduit la fatigue oculaire dans les environnements peu éclairés.
+                                </p>
                             </div>
                         </Card.Body>
                     </Card>

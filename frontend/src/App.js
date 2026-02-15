@@ -33,9 +33,32 @@ function App() {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
-  const basePath = process.env.PUBLIC_URL || '/'; // PUBLIC_URL = homepage dans package.json
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const basePath = process.env.PUBLIC_URL || '/';
 
-  // Listen for auth changes (manual poll or events)
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // Listen for theme changes (custom event for same window, storage for others)
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setTheme(localStorage.getItem('theme') || 'light');
+    };
+    const handleStorageChange = (e) => {
+      if (e.key === 'theme') setTheme(e.newValue);
+    };
+    window.addEventListener('themeChange', handleThemeChange);
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('themeChange', handleThemeChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Listen for auth changes
   useEffect(() => {
     const interval = setInterval(() => {
       setIsAuthenticated(authService.isAuthenticated());
