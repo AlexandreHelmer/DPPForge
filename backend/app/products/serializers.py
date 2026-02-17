@@ -49,7 +49,8 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'company', 'company_name', 'name', 'gtin',
-            'status', 'category', 'brand', 'is_archived', 'component_count',
+            'status', 'category', 'brand', 'material_composition', 'certifications',
+            'is_archived', 'component_count',
             'instance_count', 'is_complete', 'created_at'
         ]
     
@@ -76,7 +77,8 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'company', 'company_name', 'name', 'description',
             'gtin', 'components', 'components_detail', 'status',
-            'category', 'brand', 'model_number', 'is_archived',
+            'category', 'brand', 'model_number', 'material_composition',
+            'certifications', 'is_archived',
             'json_ld', 'is_complete', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'company', 'json_ld', 'created_at', 'updated_at']
@@ -86,6 +88,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'category': {'required': False},
             'brand': {'required': False},
             'model_number': {'required': False},
+            'material_composition': {'required': False},
+            'certifications': {'required': False},
             'components': {'required': False},
         }
     
@@ -183,6 +187,8 @@ class PublicProductInstanceSerializer(serializers.ModelSerializer):
             'model': obj.product.model_number,
             'manufacturer': obj.product.company.company_name,
             'manufacturing_date': obj.manufacturing_date,
+            'material_composition': obj.product.material_composition,
+            'certifications': obj.product.certifications,
             'json_ld': obj.product.json_ld,
             'components': ComponentSerializer(obj.product.components.all(), many=True).data
         }

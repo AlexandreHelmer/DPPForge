@@ -41,6 +41,9 @@ class ProductAdmin(admin.ModelAdmin):
         ('Identifiants produit', {
             'fields': ('gtin', 'brand', 'model_number', 'category')
         }),
+        ('Composition et Certifications', {
+            'fields': ('material_composition', 'certifications')
+        }),
         ('Production', {
             'fields': ('manufacturing_date', 'components')
         }),

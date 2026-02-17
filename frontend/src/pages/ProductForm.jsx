@@ -15,9 +15,14 @@ const ProductForm = () => {
         category: '',
         brand: '',
         model_number: '',
+        material_composition: {},
+        certifications: [],
         components: [], // Array of IDs
     });
 
+    const [newMaterial, setNewMaterial] = useState('');
+    const [newPercent, setNewPercent] = useState('');
+    const [newCert, setNewCert] = useState('');
     const [selectedComponents, setSelectedComponents] = useState([]);
     const [availableComponents, setAvailableComponents] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -55,6 +60,8 @@ const ProductForm = () => {
                 category: data.category || '',
                 brand: data.brand || '',
                 model_number: data.model_number || '',
+                material_composition: data.material_composition || {},
+                certifications: data.certifications || [],
                 components: data.components || [],
             });
             setSelectedComponents(data.components_detail || []);
@@ -119,6 +126,43 @@ const ProductForm = () => {
             components: formData.components.filter(id => id !== compId)
         });
         setSelectedComponents(selectedComponents.filter(c => c.id !== compId));
+    };
+
+    const addMaterial = () => {
+        if (newMaterial && newPercent) {
+            setFormData({
+                ...formData,
+                material_composition: {
+                    ...formData.material_composition,
+                    [newMaterial]: parseInt(newPercent, 10)
+                }
+            });
+            setNewMaterial('');
+            setNewPercent('');
+        }
+    };
+
+    const removeMaterial = (material) => {
+        const updated = { ...formData.material_composition };
+        delete updated[material];
+        setFormData({ ...formData, material_composition: updated });
+    };
+
+    const addCertification = () => {
+        if (newCert && !formData.certifications.includes(newCert)) {
+            setFormData({
+                ...formData,
+                certifications: [...formData.certifications, newCert]
+            });
+            setNewCert('');
+        }
+    };
+
+    const removeCertification = (cert) => {
+        setFormData({
+            ...formData,
+            certifications: formData.certifications.filter(c => c !== cert)
+        });
     };
 
     const filteredSuggestions = searchTerm.length > 1
@@ -236,6 +280,39 @@ const ProductForm = () => {
                                         </Form.Group>
                                     </Col>
                                 </Row>
+
+                                <Form.Group className="mb-0">
+                                    <Form.Label className="fw-medium">Certifications</Form.Label>
+                                    {formData.certifications.length > 0 && (
+                                        <div className="mb-2">
+                                            {formData.certifications.map(cert => (
+                                                <span key={cert} className="selected-chip">
+                                                    {cert}
+                                                    {!isLocked && (
+                                                        <span className="remove-btn" onClick={() => removeCertification(cert)}>×</span>
+                                                    )}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {!isLocked && (
+                                        <div className="d-flex gap-2">
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Ex: CE, RoHS"
+                                                value={newCert}
+                                                onChange={(e) => setNewCert(e.target.value)}
+                                                size="sm"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') { e.preventDefault(); addCertification(); }
+                                                }}
+                                            />
+                                            <Button variant="outline-primary" size="sm" onClick={addCertification} type="button">
+                                                <i className="fas fa-plus"></i>
+                                            </Button>
+                                        </div>
+                                    )}
+                                </Form.Group>
                             </Card.Body>
                         </Card>
 
@@ -245,6 +322,47 @@ const ProductForm = () => {
                                 <Badge bg="info">{formData.components.length}</Badge>
                             </Card.Header>
                             <Card.Body>
+
+                                <Form.Group className="mb-4">
+                                    <Form.Label className="fw-medium">Composition matérielle (%)</Form.Label>
+                                    {Object.keys(formData.material_composition).length > 0 && (
+                                        <div className="mb-2">
+                                            {Object.entries(formData.material_composition).map(([mat, pct]) => (
+                                                <span key={mat} className="selected-chip">
+                                                    {mat}: {pct}%
+                                                    {!isLocked && (
+                                                        <span className="remove-btn" onClick={() => removeMaterial(mat)}>×</span>
+                                                    )}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {!isLocked && (
+                                        <div className="d-flex gap-2">
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Matériau (ex: aluminium)"
+                                                value={newMaterial}
+                                                onChange={(e) => setNewMaterial(e.target.value)}
+                                                size="sm"
+                                            />
+                                            <Form.Control
+                                                type="number"
+                                                placeholder="%"
+                                                value={newPercent}
+                                                onChange={(e) => setNewPercent(e.target.value)}
+                                                size="sm"
+                                                style={{ width: '80px' }}
+                                                min={0}
+                                                max={100}
+                                            />
+                                            <Button variant="outline-primary" size="sm" onClick={addMaterial} type="button">
+                                                <i className="fas fa-plus"></i>
+                                            </Button>
+                                        </div>
+                                    )}
+                                </Form.Group>
+
                                 {!isLocked && (
                                     <div className="position-relative mb-4">
                                         <Form.Label className="fw-medium text-muted small">Rechercher et ajouter un composant :</Form.Label>

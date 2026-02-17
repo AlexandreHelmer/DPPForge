@@ -87,6 +87,39 @@ const PublicProductView = () => {
                                         <th className="py-3 text-muted small text-uppercase align-top">Description</th>
                                         <td className="py-3 text-muted">{product_data.description}</td>
                                     </tr>
+                                    <tr className="border-top border-light">
+                                        <th className="py-3 text-muted small text-uppercase align-top">Composition produit</th>
+                                        <td className="py-3">
+                                            {product_data.material_composition && Object.entries(product_data.material_composition).length > 0 ? (
+                                                <div className="small">
+                                                    {Object.entries(product_data.material_composition).map(([mat, pct]) => (
+                                                        <div key={mat} className="d-flex justify-content-between" style={{ maxWidth: '220px' }}>
+                                                            <span>{mat}</span>
+                                                            <span className="fw-bold ms-2">{pct}%</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted">Non spécifiée</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th className="py-3 text-muted small text-uppercase align-top">Certifications produit</th>
+                                        <td className="py-3">
+                                            {product_data.certifications && product_data.certifications.length > 0 ? (
+                                                <div className="d-flex flex-wrap gap-1">
+                                                    {product_data.certifications.map(cert => (
+                                                        <Badge key={cert} bg="info" style={{ fontSize: '0.7rem' }}>
+                                                            {cert}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted">Non spécifiées</span>
+                                            )}
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </Table>
                         </Card.Body>

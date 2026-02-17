@@ -116,6 +116,18 @@ class Product(models.Model):
     category = models.CharField(max_length=100, blank=True, verbose_name='Catégorie')
     brand = models.CharField(max_length=100, blank=True, verbose_name='Marque')
     model_number = models.CharField(max_length=100, blank=True, verbose_name='Numéro de modèle')
+    material_composition = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='Composition matérielle',
+        help_text='Ex: {"steel": 70, "plastic": 30}'
+    )
+    certifications = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name='Certifications',
+        help_text='Ex: ["CE", "RoHS", "REACH"]'
+    )
     
     # Store the generated JSON-LD
     json_ld = models.JSONField(
@@ -190,6 +202,8 @@ class Product(models.Model):
             },
             "category": self.category,
             "model": self.model_number,
+            "material": self.material_composition,
+            "certifications": self.certifications,
             "hasPart": components_data,
             "additionalProperty": [
                 {
@@ -393,4 +407,3 @@ class SupplierLink(models.Model):
         if self.expires_at < timezone.now():
             return False
         return True
-
