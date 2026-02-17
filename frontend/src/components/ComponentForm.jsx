@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button, Row, Col } from 'react-bootstrap';
+import { EU_CERTIFICATION_SUGGESTIONS } from '../constants/regulatoryOptions';
+import TagSuggestionInput from './TagSuggestionInput';
 
 const ComponentForm = ({
     formData,
@@ -12,10 +14,10 @@ const ComponentForm = ({
     cancelLabel = 'Annuler',
     showSubmit = true,
     showCancel = true,
+    certificationSuggestions = EU_CERTIFICATION_SUGGESTIONS,
 }) => {
     const [newMaterial, setNewMaterial] = useState('');
     const [newPercent, setNewPercent] = useState('');
-    const [newCert, setNewCert] = useState('');
 
     const addMaterial = () => {
         if (newMaterial && newPercent) {
@@ -39,14 +41,12 @@ const ComponentForm = ({
         });
     };
 
-    const addCertification = () => {
-        if (newCert && !formData.certifications.includes(newCert)) {
-            setFormData((prev) => ({
-                ...prev,
-                certifications: [...prev.certifications, newCert]
-            }));
-            setNewCert('');
-        }
+    const addCertification = (certification) => {
+        if (!certification || formData.certifications.includes(certification)) return;
+        setFormData((prev) => ({
+            ...prev,
+            certifications: [...prev.certifications, certification]
+        }));
     };
 
     const removeCertification = (cert) => {
@@ -56,8 +56,17 @@ const ComponentForm = ({
         }));
     };
 
+    const handlePreventEnterSubmit = (e) => {
+        if (e.key !== 'Enter') return;
+        const tag = e.target?.tagName?.toLowerCase();
+        const allowsEnterAdd = e.target?.dataset?.enterAdd === 'true';
+        if (!allowsEnterAdd && tag !== 'textarea') {
+            e.preventDefault();
+        }
+    };
+
     return (
-        <Form onSubmit={onSubmit}>
+        <Form onSubmit={onSubmit} onKeyDownCapture={handlePreventEnterSubmit}>
             <Form.Group className="mb-4">
                 <Form.Label className="fw-medium">Désignation *</Form.Label>
                 <Form.Control
@@ -162,35 +171,14 @@ const ComponentForm = ({
 
             <Form.Group className="mb-4">
                 <Form.Label className="fw-medium">Certifications</Form.Label>
-                {formData.certifications.length > 0 && (
-                    <div className="mb-2">
-                        {formData.certifications.map(cert => (
-                            <span key={cert} className="selected-chip">
-                                {cert}
-                                {!readOnly && (
-                                    <span className="remove-btn" onClick={() => removeCertification(cert)}>×</span>
-                                )}
-                            </span>
-                        ))}
-                    </div>
-                )}
-                {!readOnly && (
-                    <div className="d-flex gap-2">
-                        <Form.Control
-                            type="text"
-                            placeholder="Ex: CE, RoHS"
-                            value={newCert}
-                            onChange={(e) => setNewCert(e.target.value)}
-                            size="sm"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') { e.preventDefault(); addCertification(); }
-                            }}
-                        />
-                        <Button variant="outline-primary" size="sm" onClick={addCertification} type="button">
-                            <i className="fas fa-plus"></i>
-                        </Button>
-                    </div>
-                )}
+                <TagSuggestionInput
+                    tags={formData.certifications}
+                    suggestions={certificationSuggestions}
+                    onAdd={addCertification}
+                    onRemove={removeCertification}
+                    placeholder="Rechercher et ajouter une certification..."
+                    disabled={readOnly}
+                />
             </Form.Group>
 
             {(showCancel || showSubmit) && (

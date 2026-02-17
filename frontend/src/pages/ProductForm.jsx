@@ -3,6 +3,12 @@ import { Card, Form, Button, Row, Col, Alert, Badge, ListGroup, InputGroup, Moda
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { productsService } from '../services/products';
 import ComponentForm from '../components/ComponentForm';
+import TagSuggestionInput from '../components/TagSuggestionInput';
+import {
+    EU_CERTIFICATION_SUGGESTIONS,
+    EU_REGULATORY_CATEGORIES,
+    FLAT_EU_CATEGORY_OPTIONS
+} from '../constants/regulatoryOptions';
 
 const ProductForm = () => {
     const { id } = useParams();
@@ -23,7 +29,6 @@ const ProductForm = () => {
 
     const [newMaterial, setNewMaterial] = useState('');
     const [newPercent, setNewPercent] = useState('');
-    const [newCert, setNewCert] = useState('');
     const [selectedComponents, setSelectedComponents] = useState([]);
     const [availableComponents, setAvailableComponents] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -165,21 +170,28 @@ const ProductForm = () => {
         setFormData({ ...formData, material_composition: updated });
     };
 
-    const addCertification = () => {
-        if (newCert && !formData.certifications.includes(newCert)) {
-            setFormData({
-                ...formData,
-                certifications: [...formData.certifications, newCert]
-            });
-            setNewCert('');
-        }
-    };
-
     const removeCertification = (cert) => {
         setFormData({
             ...formData,
             certifications: formData.certifications.filter(c => c !== cert)
         });
+    };
+
+    const addCertificationTag = (certification) => {
+        if (!certification || formData.certifications.includes(certification)) return;
+        setFormData((prev) => ({
+            ...prev,
+            certifications: [...prev.certifications, certification]
+        }));
+    };
+
+    const handlePreventEnterSubmit = (e) => {
+        if (e.key !== 'Enter') return;
+        const tag = e.target?.tagName?.toLowerCase();
+        const allowsEnterAdd = e.target?.dataset?.enterAdd === 'true';
+        if (!allowsEnterAdd && tag !== 'textarea') {
+            e.preventDefault();
+        }
     };
 
     const resetComponentModalForm = () => {
@@ -263,6 +275,7 @@ const ProductForm = () => {
         : [];
 
     const isLocked = status === 'LOCKED';
+    const isKnownCategory = !formData.category || FLAT_EU_CATEGORY_OPTIONS.includes(formData.category);
 
     return (
         <div className="mb-5">
@@ -286,7 +299,7 @@ const ProductForm = () => {
             {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
             {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-            <Form onSubmit={(e) => handleSubmit(e, false)}>
+            <Form onSubmit={(e) => handleSubmit(e, false)} onKeyDownCapture={handlePreventEnterSubmit}>
                 <Row>
                     <Col md={8}>
                         <Card className="mb-4">
@@ -349,13 +362,27 @@ const ProductForm = () => {
                                     <Col md={6}>
                                         <Form.Group className="mb-3">
                                             <Form.Label className="fw-medium">Catégorie EU</Form.Label>
-                                            <Form.Control
-                                                type="text"
+                                            <Form.Select
                                                 value={formData.category}
                                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                                 disabled={isLocked}
-                                                placeholder="Ex: Batteries industrielles"
-                                            />
+                                            >
+                                                <option value="">Sélectionner une catégorie réglementaire</option>
+                                                {!isKnownCategory && (
+                                                    <option value={formData.category}>
+                                                        {formData.category} (catégorie existante)
+                                                    </option>
+                                                )}
+                                                {EU_REGULATORY_CATEGORIES.map((group) => (
+                                                    <optgroup key={group.group} label={group.group}>
+                                                        {group.options.map((option) => (
+                                                            <option key={option} value={option}>
+                                                                {option}
+                                                            </option>
+                                                        ))}
+                                                    </optgroup>
+                                                ))}
+                                            </Form.Select>
                                         </Form.Group>
                                     </Col>
                                     <Col md={6}>
@@ -373,35 +400,14 @@ const ProductForm = () => {
 
                                 <Form.Group className="mb-0">
                                     <Form.Label className="fw-medium">Certifications</Form.Label>
-                                    {formData.certifications.length > 0 && (
-                                        <div className="mb-2">
-                                            {formData.certifications.map(cert => (
-                                                <span key={cert} className="selected-chip">
-                                                    {cert}
-                                                    {!isLocked && (
-                                                        <span className="remove-btn" onClick={() => removeCertification(cert)}>×</span>
-                                                    )}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {!isLocked && (
-                                        <div className="d-flex gap-2">
-                                            <Form.Control
-                                                type="text"
-                                                placeholder="Ex: CE, RoHS"
-                                                value={newCert}
-                                                onChange={(e) => setNewCert(e.target.value)}
-                                                size="sm"
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') { e.preventDefault(); addCertification(); }
-                                                }}
-                                            />
-                                            <Button variant="outline-primary" size="sm" onClick={addCertification} type="button">
-                                                <i className="fas fa-plus"></i>
-                                            </Button>
-                                        </div>
-                                    )}
+                                    <TagSuggestionInput
+                                        tags={formData.certifications}
+                                        suggestions={EU_CERTIFICATION_SUGGESTIONS}
+                                        onAdd={addCertificationTag}
+                                        onRemove={removeCertification}
+                                        placeholder="Rechercher et ajouter une certification..."
+                                        disabled={isLocked}
+                                    />
                                 </Form.Group>
                             </Card.Body>
                         </Card>
