@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Form, Button, Row, Col, Alert, Badge, ListGroup, InputGroup, Modal } from 'react-bootstrap';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { productsService } from '../services/products';
+import ComponentForm from '../components/ComponentForm';
 
 const ProductForm = () => {
     const { id } = useParams();
@@ -32,6 +33,21 @@ const ProductForm = () => {
     const [status, setStatus] = useState('DRAFT');
     const [isArchived, setIsArchived] = useState(false);
     const [showLockModal, setShowLockModal] = useState(false);
+    const [showComponentModal, setShowComponentModal] = useState(false);
+    const [componentModalMode, setComponentModalMode] = useState('create');
+    const [editingComponentId, setEditingComponentId] = useState(null);
+    const [componentReadOnly, setComponentReadOnly] = useState(false);
+    const [componentLoading, setComponentLoading] = useState(false);
+    const [componentError, setComponentError] = useState('');
+    const [componentFormData, setComponentFormData] = useState({
+        name: '',
+        description: '',
+        manufacturer: '',
+        material_composition: {},
+        certifications: [],
+        origin_country: '',
+        gtin: '',
+    });
 
     useEffect(() => {
         loadComponents();
@@ -110,13 +126,14 @@ const ProductForm = () => {
     };
 
     const addComponent = (comp) => {
-        if (!formData.components.includes(comp.id)) {
-            setFormData({
-                ...formData,
-                components: [...formData.components, comp.id]
-            });
-            setSelectedComponents([...selectedComponents, comp]);
-        }
+        setFormData((prev) => {
+            if (prev.components.includes(comp.id)) return prev;
+            return { ...prev, components: [...prev.components, comp.id] };
+        });
+        setSelectedComponents((prev) => {
+            if (prev.some((item) => item.id === comp.id)) return prev;
+            return [...prev, comp];
+        });
         setSearchTerm('');
     };
 
@@ -163,6 +180,79 @@ const ProductForm = () => {
             ...formData,
             certifications: formData.certifications.filter(c => c !== cert)
         });
+    };
+
+    const resetComponentModalForm = () => {
+        setComponentFormData({
+            name: '',
+            description: '',
+            manufacturer: '',
+            material_composition: {},
+            certifications: [],
+            origin_country: '',
+            gtin: '',
+        });
+        setComponentError('');
+    };
+
+    const openCreateComponentModal = () => {
+        setComponentModalMode('create');
+        setEditingComponentId(null);
+        setComponentReadOnly(false);
+        resetComponentModalForm();
+        setShowComponentModal(true);
+    };
+
+    const openEditComponentModal = (comp) => {
+        const isCompReadOnly = !!(comp?.supplier_locked || comp?.is_brand_locked);
+        setComponentModalMode('edit');
+        setEditingComponentId(comp.id);
+        setComponentReadOnly(isCompReadOnly);
+        setComponentError('');
+        setComponentFormData({
+            name: comp.name || '',
+            description: comp.description || '',
+            manufacturer: comp.manufacturer || '',
+            material_composition: comp.material_composition || {},
+            certifications: comp.certifications || [],
+            origin_country: comp.origin_country || '',
+            gtin: comp.gtin || '',
+        });
+        setShowComponentModal(true);
+    };
+
+    const handleCreateComponent = async (e) => {
+        e.preventDefault();
+        setComponentLoading(true);
+        setComponentError('');
+        try {
+            if (componentModalMode === 'edit' && editingComponentId) {
+                const updated = await productsService.updateComponent(editingComponentId, componentFormData);
+                setAvailableComponents((prev) =>
+                    prev.map((item) => item.id === updated.id ? { ...item, ...updated } : item)
+                );
+                setSelectedComponents((prev) =>
+                    prev.map((item) => item.id === updated.id ? { ...item, ...updated } : item)
+                );
+                setShowComponentModal(false);
+                setSuccess('Composant mis à jour.');
+            } else {
+                const created = await productsService.createComponent(componentFormData);
+                setAvailableComponents((prev) => {
+                    if (prev.some((item) => item.id === created.id)) return prev;
+                    return [created, ...prev];
+                });
+                addComponent(created);
+                setShowComponentModal(false);
+                resetComponentModalForm();
+                setSuccess('Composant créé et ajouté au produit.');
+            }
+        } catch (err) {
+            const msg = err.response?.data?.[0] || err.response?.data?.detail || 'Erreur lors de la création du composant.';
+            setComponentError(msg);
+        } finally {
+            setComponentLoading(false);
+        }
     };
 
     const filteredSuggestions = searchTerm.length > 1
@@ -365,7 +455,18 @@ const ProductForm = () => {
 
                                 {!isLocked && (
                                     <div className="position-relative mb-4">
-                                        <Form.Label className="fw-medium text-muted small">Rechercher et ajouter un composant :</Form.Label>
+                                        <div className="d-flex justify-content-between align-items-center mb-2">
+                                            <Form.Label className="fw-medium text-muted small mb-0">Rechercher et ajouter un composant :</Form.Label>
+                                            <Button
+                                                variant="outline-primary"
+                                                size="sm"
+                                                type="button"
+                                                onClick={openCreateComponentModal}
+                                            >
+                                                <i className="fas fa-plus me-1"></i>
+                                                Nouveau composant
+                                            </Button>
+                                        </div>
                                         <InputGroup>
                                             <InputGroup.Text><i className="fas fa-magnifying-glass"></i></InputGroup.Text>
                                             <Form.Control
@@ -395,10 +496,34 @@ const ProductForm = () => {
 
                                 <div className="d-flex flex-wrap gap-2">
                                     {selectedComponents.map(comp => (
-                                        <div key={comp.id} className="selected-chip">
+                                        <div
+                                            key={comp.id}
+                                            className="selected-chip"
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => openEditComponentModal(comp)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    openEditComponentModal(comp);
+                                                }
+                                            }}
+                                            style={{ cursor: 'pointer' }}
+                                            title={comp.supplier_locked || comp.is_brand_locked ? 'Composant verrouillé (lecture seule)' : 'Modifier le composant'}
+                                        >
                                             {comp.name}
+                                            <span className="ms-1 opacity-75">
+                                                ({comp.manufacturer || 'Fournisseur inconnu'})
+                                            </span>
                                             {!isLocked && (
-                                                <span className="remove-btn" onClick={() => removeComponent(comp.id)} aria-label={`Retirer ${comp.name}`}>
+                                                <span
+                                                    className="remove-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        removeComponent(comp.id);
+                                                    }}
+                                                    aria-label={`Retirer ${comp.name}`}
+                                                >
                                                     <i className="fas fa-xmark"></i>
                                                 </span>
                                             )}
@@ -476,6 +601,43 @@ const ProductForm = () => {
                         {loading ? 'Traitement...' : 'Oui, Valider & Verrouiller'}
                     </Button>
                 </Modal.Footer>
+            </Modal>
+
+            <Modal show={showComponentModal} onHide={() => setShowComponentModal(false)} size="lg" centered>
+                <Modal.Header closeButton className="border-0 pb-0">
+                    <Modal.Title className="fw-bold">
+                        {componentModalMode === 'edit'
+                            ? (componentReadOnly ? 'Détails du composant' : 'Modifier le composant')
+                            : 'Nouveau composant'}
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="pt-4">
+                    {componentError && (
+                        <Alert variant="danger" dismissible onClose={() => setComponentError('')}>
+                            {componentError}
+                        </Alert>
+                    )}
+                    {componentModalMode === 'edit' && componentReadOnly && (
+                        <Alert variant="info" className="d-flex align-items-center gap-2 mb-4">
+                            <i className="fas fa-info-circle"></i>
+                            <span>
+                                Ce composant est en lecture seule car il est verrouillé
+                                {componentFormData.manufacturer ? ` (fournisseur: ${componentFormData.manufacturer})` : ''}.
+                            </span>
+                        </Alert>
+                    )}
+                    <ComponentForm
+                        formData={componentFormData}
+                        setFormData={setComponentFormData}
+                        onSubmit={handleCreateComponent}
+                        onCancel={() => setShowComponentModal(false)}
+                        loading={componentLoading}
+                        readOnly={componentReadOnly}
+                        submitLabel={componentModalMode === 'edit' ? 'Enregistrer' : 'Créer et ajouter'}
+                        cancelLabel={componentReadOnly ? 'Fermer' : 'Annuler'}
+                        showSubmit={!componentReadOnly}
+                    />
+                </Modal.Body>
             </Modal>
         </div>
     );

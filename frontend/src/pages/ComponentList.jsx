@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, Alert, Badge, InputGroup } from 'react-bootstrap';
 import { productsService } from '../services/products';
 import ListTable from '../components/ListTable';
+import ComponentForm from '../components/ComponentForm';
 
 const ComponentList = () => {
     const [components, setComponents] = useState([]);
+    const [showArchived, setShowArchived] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -16,9 +18,6 @@ const ComponentList = () => {
         gtin: '',
     });
 
-    const [newMaterial, setNewMaterial] = useState('');
-    const [newPercent, setNewPercent] = useState('');
-    const [newCert, setNewCert] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -102,6 +101,22 @@ const ComponentList = () => {
         }
     };
 
+    const handleArchive = async (id, unarchive = false) => {
+        const actionName = unarchive ? 'désarchiver' : 'archiver';
+        if (window.confirm(`Voulez-vous vraiment ${actionName} ce composant ?`)) {
+            try {
+                if (unarchive) {
+                    await productsService.unarchiveComponent(id);
+                } else {
+                    await productsService.archiveComponent(id);
+                }
+                loadComponents();
+            } catch (err) {
+                alert("Erreur lors de l'archivage");
+            }
+        }
+    };
+
     const resetForm = () => {
         setEditingId(null);
         setFormData({
@@ -113,49 +128,7 @@ const ComponentList = () => {
             origin_country: '',
             gtin: '',
         });
-        setNewMaterial('');
-        setNewPercent('');
-        setNewCert('');
         setError('');
-    };
-
-    // Material composition management
-    const addMaterial = () => {
-        if (newMaterial && newPercent) {
-            setFormData({
-                ...formData,
-                material_composition: {
-                    ...formData.material_composition,
-                    [newMaterial]: parseInt(newPercent)
-                }
-            });
-            setNewMaterial('');
-            setNewPercent('');
-        }
-    };
-
-    const removeMaterial = (mat) => {
-        const updated = { ...formData.material_composition };
-        delete updated[mat];
-        setFormData({ ...formData, material_composition: updated });
-    };
-
-    // Certifications management
-    const addCertification = () => {
-        if (newCert && !formData.certifications.includes(newCert)) {
-            setFormData({
-                ...formData,
-                certifications: [...formData.certifications, newCert]
-            });
-            setNewCert('');
-        }
-    };
-
-    const removeCertification = (cert) => {
-        setFormData({
-            ...formData,
-            certifications: formData.certifications.filter(c => c !== cert)
-        });
     };
 
     // Supplier link handlers
@@ -198,7 +171,13 @@ const ComponentList = () => {
             render: (val, item) => (
                 <>
                     <div className="d-flex align-items-center gap-2">
-                        <span className="fw-bold">{val}</span>
+                        <button
+                            type="button"
+                            className="btn btn-link p-0 text-decoration-none fw-bold text-start"
+                            onClick={() => handleEdit(item)}
+                        >
+                            {val}
+                        </button>
                         {item.supplier_validated && (
                             <Badge bg="success" className="d-inline-flex align-items-center gap-1" style={{ fontSize: '0.7rem' }}>
                                 <i className="fas fa-check-circle"></i> Validé fournisseur
@@ -214,8 +193,13 @@ const ComponentList = () => {
                                 <i className="fas fa-lock"></i>
                             </Badge>
                         )}
+                        {item.is_archived && (
+                            <Badge bg="warning" text="dark" style={{ fontSize: '0.65rem' }}>
+                                Archivé
+                            </Badge>
+                        )}
                     </div>
-                    <div className="small text-muted text-truncate" style={{ maxWidth: '300px' }}>
+                    <div className="small text-muted text-truncate" style={{ maxWidth: '260px' }}>
                         {item.description || <span className="text-muted opacity-50 italic">Pas de description</span>}
                     </div>
                 </>
@@ -225,6 +209,26 @@ const ComponentList = () => {
             header: 'Fabricant',
             key: 'manufacturer',
             render: (val) => val || <span className="text-muted opacity-50">-</span>
+        },
+        {
+            header: 'Utilisé dans',
+            key: 'used_in_products',
+            render: (val) => (
+                val && val.length > 0 ? (
+                    <div className="d-flex flex-wrap gap-1">
+                        {val.map((product) => (
+                            <Badge
+                                key={product.id}
+                                bg={product.is_archived ? 'secondary' : 'light'}
+                                className={product.is_archived ? '' : 'text-dark border'}
+                                style={{ fontSize: '0.65rem' }}
+                            >
+                                {product.name}
+                            </Badge>
+                        ))}
+                    </div>
+                ) : <span className="text-muted opacity-75">Aucun produit</span>
+            )
         },
         {
             header: 'Origine',
@@ -237,6 +241,20 @@ const ComponentList = () => {
             render: (val) => val ? <code>{val}</code> : <span className="text-muted opacity-50">-</span>
         },
         {
+            header: 'Dernière modif.',
+            key: 'updated_at',
+            render: (val) => (
+                val
+                    ? (
+                        <div className="small text-nowrap">
+                            {new Date(val).toLocaleDateString('fr-FR')}<br />
+                            <span className="text-muted">{new Date(val).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    )
+                    : <span className="text-muted">-</span>
+            )
+        },
+        {
             header: 'Actions',
             key: 'id',
             className: 'text-end px-4',
@@ -247,10 +265,11 @@ const ComponentList = () => {
                         <Button
                             size="sm"
                             variant="link"
-                            className={`${isLocked ? 'text-muted' : 'text-info'} text-decoration-none fw-bold`}
-                            onClick={() => handleEdit(item)}
+                            className="text-secondary text-decoration-none"
+                            onClick={() => handleArchive(id, item.is_archived)}
+                            title={item.is_archived ? "Désarchiver" : "Archiver"}
                         >
-                            {isLocked ? 'Consulter' : 'Modifier'}
+                            <i className={`fas ${item.is_archived ? 'fa-box-open' : 'fa-box-archive'}`}></i>
                         </Button>
 
                         {!isLocked && (
@@ -262,9 +281,9 @@ const ComponentList = () => {
                                     onClick={() => openSupplierModal(item)}
                                     title="Demander les infos au fournisseur"
                                 >
-                                    <i className="fas fa-link me-1"></i>Fournisseur
+                                    <i className="fas fa-link"></i>
                                 </Button>
-                                <Button size="sm" variant="link" className="text-danger text-decoration-none" onClick={() => handleDelete(id)}>
+                                <Button size="sm" variant="link" className="text-danger text-decoration-none" onClick={() => handleDelete(id)} title="Supprimer">
                                     <i className="fas fa-trash-can"></i>
                                 </Button>
                             </>
@@ -282,6 +301,10 @@ const ComponentList = () => {
     ];
 
     if (listLoading) return <div className="text-center p-5">Chargement de la bibliothèque...</div>;
+    const filteredComponents = components.filter(c => showArchived ? c.is_archived : !c.is_archived);
+
+    const editingComponent = components.find(c => c.id === editingId);
+    const isReadOnlyModal = !!editingComponent && (editingComponent.supplier_locked || editingComponent.is_brand_locked);
 
     return (
         <div className="animate-fade-in">
@@ -289,11 +312,6 @@ const ComponentList = () => {
                 <div>
                     <h1 className="mb-0">Matériaux & Composants</h1>
                     <p className="text-muted mb-0">Gérez les matières premières, pièces et composants de vos fournisseurs.</p>
-                </div>
-                <div className="header-actions">
-                    <Button onClick={() => { resetForm(); setShowModal(true); }} variant="accent" className="text-white shadow-sm">
-                        <i className="fas fa-plus me-1"></i> Ajouter un élément
-                    </Button>
                 </div>
             </div>
 
@@ -305,10 +323,26 @@ const ComponentList = () => {
             )}
 
             <ListTable
-                items={components}
+                items={filteredComponents}
                 columns={columns}
                 searchPlaceholder="Rechercher par nom, fabricant, origine..."
-                emptyMessage="Aucun composant trouvé"
+                emptyMessage={showArchived ? "Aucun composant archivé" : "Aucun composant actif"}
+                compact
+                toolbarActions={
+                    <>
+                        <Form.Check
+                            type="switch"
+                            id="show-archived-components"
+                            label="Voir les archives"
+                            checked={showArchived}
+                            onChange={(e) => setShowArchived(e.target.checked)}
+                            className="mb-0"
+                        />
+                        <Button onClick={() => { resetForm(); setShowModal(true); }} variant="accent" className="text-white shadow-sm">
+                            <i className="fas fa-plus me-1"></i> Nouveau composant
+                        </Button>
+                    </>
+                }
             />
 
             {/* Component edit/create modal */}
@@ -324,173 +358,23 @@ const ComponentList = () => {
                 </Modal.Header>
                 <Modal.Body className="pt-4">
                     {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
-                    <Form onSubmit={handleSubmit}>
-                        {editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                            components.find(c => c.id === editingId)?.is_brand_locked) && (
-                                <Alert variant="info" className="d-flex align-items-center gap-2 mb-4">
-                                    <i className="fas fa-info-circle"></i>
-                                    <span>Ce composant est en lecture seule car il a été validé.</span>
-                                </Alert>
-                            )}
-                        <Form.Group className="mb-4">
-                            <Form.Label className="fw-medium">Désignation *</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                required
-                                placeholder="Ex: Module de commande électronique v4"
-                                readOnly={editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                    components.find(c => c.id === editingId)?.is_brand_locked)}
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-4">
-                            <Form.Label className="fw-medium">Description technique</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                rows={2}
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                readOnly={editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                    components.find(c => c.id === editingId)?.is_brand_locked)}
-                            />
-                        </Form.Group>
-
-                        <div className="row">
-                            <div className="col-md-6">
-                                <Form.Group className="mb-4">
-                                    <Form.Label className="fw-medium">Fabricant / Fournisseur</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        value={formData.manufacturer}
-                                        onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
-                                        placeholder="Nom de l'entité"
-                                        readOnly={editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                            components.find(c => c.id === editingId)?.is_brand_locked)}
-                                    />
-                                </Form.Group>
-                            </div>
-                            <div className="col-md-6">
-                                <Form.Group className="mb-4">
-                                    <Form.Label className="fw-medium">Pays d'origine</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        value={formData.origin_country}
-                                        onChange={(e) => setFormData({ ...formData, origin_country: e.target.value })}
-                                        placeholder="Ex: France"
-                                        readOnly={editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                            components.find(c => c.id === editingId)?.is_brand_locked)}
-                                    />
-                                </Form.Group>
-                            </div>
-                        </div>
-
-                        <Form.Group className="mb-4">
-                            <Form.Label className="fw-medium">GTIN (Global Trade Item Number)</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={formData.gtin}
-                                onChange={(e) => setFormData({ ...formData, gtin: e.target.value })}
-                                maxLength={14}
-                                placeholder="Code barres à 14 chiffres"
-                                readOnly={editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                    components.find(c => c.id === editingId)?.is_brand_locked)}
-                            />
-                        </Form.Group>
-
-                        {/* Material Composition */}
-                        <Form.Group className="mb-4">
-                            <Form.Label className="fw-medium">Composition matérielle (%)</Form.Label>
-                            {Object.keys(formData.material_composition).length > 0 && (
-                                <div className="mb-2">
-                                    {Object.entries(formData.material_composition).map(([mat, pct]) => (
-                                        <span key={mat} className="selected-chip">
-                                            {mat}: {pct}%
-                                            {!(editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                                components.find(c => c.id === editingId)?.is_brand_locked)) && (
-                                                    <span className="remove-btn" onClick={() => removeMaterial(mat)}>×</span>
-                                                )}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                            {!(editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                components.find(c => c.id === editingId)?.is_brand_locked)) && (
-                                    <div className="d-flex gap-2">
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="Matériau (ex: coton)"
-                                            value={newMaterial}
-                                            onChange={(e) => setNewMaterial(e.target.value)}
-                                            size="sm"
-                                        />
-                                        <Form.Control
-                                            type="number"
-                                            placeholder="%"
-                                            value={newPercent}
-                                            onChange={(e) => setNewPercent(e.target.value)}
-                                            size="sm"
-                                            style={{ width: '80px' }}
-                                            min={0}
-                                            max={100}
-                                        />
-                                        <Button variant="outline-primary" size="sm" onClick={addMaterial} type="button">
-                                            <i className="fas fa-plus"></i>
-                                        </Button>
-                                    </div>
-                                )}
-                        </Form.Group>
-
-                        {/* Certifications */}
-                        <Form.Group className="mb-4">
-                            <Form.Label className="fw-medium">Certifications</Form.Label>
-                            {formData.certifications.length > 0 && (
-                                <div className="mb-2">
-                                    {formData.certifications.map(cert => (
-                                        <span key={cert} className="selected-chip">
-                                            {cert}
-                                            {!(editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                                components.find(c => c.id === editingId)?.is_brand_locked)) && (
-                                                    <span className="remove-btn" onClick={() => removeCertification(cert)}>×</span>
-                                                )}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                            {!(editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                components.find(c => c.id === editingId)?.is_brand_locked)) && (
-                                    <div className="d-flex gap-2">
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="Ex: CE, RoHS"
-                                            value={newCert}
-                                            onChange={(e) => setNewCert(e.target.value)}
-                                            size="sm"
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') { e.preventDefault(); addCertification(); }
-                                            }}
-                                        />
-                                        <Button variant="outline-primary" size="sm" onClick={addCertification} type="button">
-                                            <i className="fas fa-plus"></i>
-                                        </Button>
-                                    </div>
-                                )}
-                        </Form.Group>
-
-                        <div className="d-flex justify-content-end mt-4 pt-3 border-top gap-2">
-                            <Button variant="light" onClick={() => setShowModal(false)}>
-                                {editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                    components.find(c => c.id === editingId)?.is_brand_locked) ? 'Fermer' : 'Annuler'}
-                            </Button>
-                            {!(editingId && (components.find(c => c.id === editingId)?.supplier_locked ||
-                                components.find(c => c.id === editingId)?.is_brand_locked)) && (
-                                    <Button type="submit" variant="primary" disabled={loading} className="px-5 shadow-sm">
-                                        {loading ? 'Enregistrement...' : 'Sauvegarder'}
-                                    </Button>
-                                )}
-                        </div>
-                    </Form>
+                    {isReadOnlyModal && (
+                        <Alert variant="info" className="d-flex align-items-center gap-2 mb-4">
+                            <i className="fas fa-info-circle"></i>
+                            <span>Ce composant est en lecture seule car il a été validé.</span>
+                        </Alert>
+                    )}
+                    <ComponentForm
+                        formData={formData}
+                        setFormData={setFormData}
+                        onSubmit={handleSubmit}
+                        onCancel={() => setShowModal(false)}
+                        loading={loading}
+                        readOnly={isReadOnlyModal}
+                        submitLabel="Sauvegarder"
+                        cancelLabel={isReadOnlyModal ? 'Fermer' : 'Annuler'}
+                        showSubmit={!isReadOnlyModal}
+                    />
                 </Modal.Body>
             </Modal>
 

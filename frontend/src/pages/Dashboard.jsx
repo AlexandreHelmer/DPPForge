@@ -85,7 +85,7 @@ const Dashboard = () => {
                                 <i className="fas fa-microchip"></i>
                             </div>
                             <h3 className="fw-bold">{stats.summary.total_components}</h3>
-                            <Card.Text className="text-muted small text-uppercase tracking-wider">Matériaux</Card.Text>
+                            <Card.Text className="text-muted small text-uppercase tracking-wider">Matériaux & Composants</Card.Text>
                         </Card.Body>
                     </Card>
                 </Col>
@@ -116,7 +116,7 @@ const Dashboard = () => {
                                 <Badge bg="success" className="px-3">{stats.products_by_status.complete}</Badge>
                             </div>
                             <div className="status-item d-flex justify-content-between align-items-center p-3 border-info rounded">
-                                <span><i className="fas fa-lock me-2 text-warning"></i> Verrouillé (DPP)</span>
+                                <span><i className="fas fa-lock me-2 text-warning"></i> Verrouillé</span>
                                 <Badge bg="warning" className="px-3">{stats.products_by_status.locked}</Badge>
                             </div>
                         </Card.Body>

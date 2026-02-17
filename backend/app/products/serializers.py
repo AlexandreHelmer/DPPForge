@@ -8,14 +8,15 @@ class ComponentSerializer(serializers.ModelSerializer):
     """
     company_name = serializers.CharField(source='company.company_name', read_only=True)
     is_brand_locked = serializers.SerializerMethodField()
+    used_in_products = serializers.SerializerMethodField()
     
     class Meta:
         model = Component
         fields = [
             'id', 'company', 'company_name', 'name', 'description',
             'manufacturer', 'material_composition', 'certifications',
-            'origin_country', 'gtin', 'supplier_validated', 'supplier_locked',
-            'is_brand_locked', 'created_at', 'updated_at'
+            'origin_country', 'gtin', 'supplier_validated', 'supplier_locked', 'is_archived',
+            'is_brand_locked', 'used_in_products', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'company', 'supplier_validated', 'supplier_locked', 'is_brand_locked', 'created_at', 'updated_at']
         extra_kwargs = {
@@ -25,6 +26,7 @@ class ComponentSerializer(serializers.ModelSerializer):
             'certifications': {'required': False},
             'origin_country': {'required': False},
             'gtin': {'required': False},
+            'is_archived': {'required': False},
         }
     
     def create(self, validated_data):
@@ -34,6 +36,17 @@ class ComponentSerializer(serializers.ModelSerializer):
 
     def get_is_brand_locked(self, obj):
         return obj.products.filter(status='LOCKED').exists()
+
+    def get_used_in_products(self, obj):
+        return [
+            {
+                'id': str(product.id),
+                'name': product.name,
+                'status': product.status,
+                'is_archived': product.is_archived,
+            }
+            for product in obj.products.all()
+        ]
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -51,7 +64,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             'id', 'company', 'company_name', 'name', 'gtin',
             'status', 'category', 'brand', 'material_composition', 'certifications',
             'is_archived', 'component_count',
-            'instance_count', 'is_complete', 'created_at'
+            'instance_count', 'is_complete', 'created_at', 'updated_at'
         ]
     
     def get_component_count(self, obj):

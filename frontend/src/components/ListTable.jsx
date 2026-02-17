@@ -14,7 +14,9 @@ const ListTable = ({
     columns = [],
     searchPlaceholder = "Rechercher...",
     emptyMessage = "Aucun résultat trouvé",
-    pageSize = 10
+    pageSize = 10,
+    toolbarActions = null,
+    compact = false
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -38,8 +40,8 @@ const ListTable = ({
 
     return (
         <div className="list-table-container">
-            <div className="mb-3">
-                <InputGroup className="max-w-400">
+            <div className="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+                <InputGroup style={{ maxWidth: '520px' }}>
                     <InputGroup.Text className="border-end-0">
                         <i className="fas fa-magnifying-glass"></i>
                     </InputGroup.Text>
@@ -51,14 +53,19 @@ const ListTable = ({
                         className="border-start-0 ps-0"
                     />
                 </InputGroup>
+                {toolbarActions && (
+                    <div className="d-flex align-items-center gap-2 flex-wrap">
+                        {toolbarActions}
+                    </div>
+                )}
             </div>
 
             <div className="card border-0 shadow-sm overflow-hidden">
-                <Table hover responsive className="mb-0">
+                <Table hover responsive className={`mb-0 ${compact ? 'table-sm' : ''}`}>
                     <thead className="bg-light">
                         <tr>
                             {columns.map((col, idx) => (
-                                <th key={idx} className={`py-3 ${col.className || ''}`}>
+                                <th key={idx} className={`${compact ? 'py-2' : 'py-3'} ${col.className || ''}`}>
                                     {col.header}
                                 </th>
                             ))}
@@ -69,7 +76,7 @@ const ListTable = ({
                             paginatedItems.map((item, rowIdx) => (
                                 <tr key={item.id || rowIdx} className="align-middle">
                                     {columns.map((col, colIdx) => (
-                                        <td key={colIdx} className={col.className || ''}>
+                                        <td key={colIdx} className={`${compact ? 'py-2' : ''} ${col.className || ''}`}>
                                             {col.render ? col.render(item[col.key], item) : item[col.key]}
                                         </td>
                                     ))}
@@ -89,7 +96,7 @@ const ListTable = ({
                 </Table>
 
                 {totalPages > 1 && (
-                    <div className="d-flex justify-content-between align-items-center p-3 border-top bg-light">
+                    <div className="d-flex justify-content-between align-items-center p-3 border-top">
                         <div className="small text-muted">
                             Affichage de {startIndex + 1} à {Math.min(startIndex + pageSize, filteredItems.length)} sur {filteredItems.length} éléments
                         </div>

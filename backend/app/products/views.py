@@ -37,7 +37,7 @@ class ComponentViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         # Only show components belonging to the current user
-        return Component.objects.filter(company=self.request.user)
+        return Component.objects.filter(company=self.request.user).prefetch_related('products')
     
     def perform_create(self, serializer):
         serializer.save(company=self.request.user)
@@ -61,6 +61,20 @@ class ComponentViewSet(viewsets.ModelViewSet):
             product_names = ", ".join([p.name for p in instance.products.all()[:3]])
             raise ValidationError(f"Ce composant est utilisé par les produits suivants : {product_names}. Supprimez-le d'abord des produits.")
         instance.delete()
+
+    @action(detail=True, methods=['post'])
+    def archive(self, request, pk=None):
+        component = self.get_object()
+        component.is_archived = True
+        component.save()
+        return Response({'status': 'archived'})
+
+    @action(detail=True, methods=['post'])
+    def unarchive(self, request, pk=None):
+        component = self.get_object()
+        component.is_archived = False
+        component.save()
+        return Response({'status': 'active'})
 
 
 class ProductViewSet(viewsets.ModelViewSet):

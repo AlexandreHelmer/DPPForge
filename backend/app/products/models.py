@@ -54,6 +54,7 @@ class Component(models.Model):
         default=False,
         verbose_name='Verrouillé (fournisseur)'
     )
+    is_archived = models.BooleanField(default=False, verbose_name='Archivé')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

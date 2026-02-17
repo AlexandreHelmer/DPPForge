@@ -26,6 +26,16 @@ export const productsService = {
         await api.delete(`/api/components/${id}/`);
     },
 
+    async archiveComponent(id) {
+        const response = await api.post(`/api/components/${id}/archive/`);
+        return response.data;
+    },
+
+    async unarchiveComponent(id) {
+        const response = await api.post(`/api/components/${id}/unarchive/`);
+        return response.data;
+    },
+
     // Products
     async getProducts() {
         const response = await api.get('/api/products/');

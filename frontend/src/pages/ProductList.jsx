@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Badge, Form } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { productsService } from '../services/products';
 import ListTable from '../components/ListTable';
 
 const ProductList = () => {
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showArchived, setShowArchived] = useState(false);
@@ -68,16 +69,20 @@ const ProductList = () => {
             key: 'name',
             className: 'px-4',
             render: (val, item) => (
-                <>
+                <button
+                    type="button"
+                    className="btn btn-link p-0 text-start text-decoration-none"
+                    onClick={() => navigate(`/products/edit/${item.id}`)}
+                >
                     <div className="fw-bold">{val}</div>
                     <div className="small text-muted">{item.brand || 'Marque non spécifiée'}</div>
-                </>
+                </button>
             )
         },
         {
             header: 'GTIN',
             key: 'gtin',
-            render: (val) => <code>{val || <span className="text-muted opacity-50 italic">Sans GTIN</span>}</code>
+            render: (val) => <code>{val || <span className="text-muted opacity-50 italic">-</span>}</code>
         },
         { header: 'Catégorie', key: 'category' },
         {
@@ -96,32 +101,40 @@ const ProductList = () => {
             render: (val) => getStatusBadge(val)
         },
         {
+            header: 'Dernière modif.',
+            key: 'updated_at',
+            render: (val) => (
+                val
+                    ? (
+                        <div className="small text-nowrap">
+                            {new Date(val).toLocaleDateString('fr-FR')}<br />
+                            <span className="text-muted">{new Date(val).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    )
+                    : <span className="text-muted">-</span>
+            )
+        },
+        {
             header: 'Actions',
             key: 'id',
             className: 'text-end px-4',
             render: (id, item) => (
                 <div className="d-flex justify-content-end gap-1">
-                    <Button
-                        as={Link}
-                        to={`/products/edit/${id}`}
-                        variant="link"
-                        className="text-decoration-none fw-bold text-accent"
-                    >
-                        {item.status === 'LOCKED' ? 'Visualiser' : 'Éditer'}
-                    </Button>
-
                     {item.status !== 'LOCKED' && (
                         <Button
+                            size="sm"
                             variant="link"
                             className="text-danger text-decoration-none"
                             onClick={() => handleDelete(id)}
                             aria-label="Supprimer le produit"
+                            title="Supprimer"
                         >
                             <i className="fas fa-trash-can"></i>
                         </Button>
                     )}
 
                     <Button
+                        size="sm"
                         variant="link"
                         className="text-secondary text-decoration-none"
                         onClick={() => handleArchive(id, item.is_archived)}
@@ -146,19 +159,6 @@ const ProductList = () => {
                     <h1 className="mb-0">Catalogue Produits</h1>
                     <p className="text-muted mb-0">Gérez vos modèles et accédez au Digital Product Passport.</p>
                 </div>
-                <div className="header-actions">
-                    <Form.Check
-                        type="switch"
-                        id="show-archived"
-                        label="Voir les archives"
-                        checked={showArchived}
-                        onChange={(e) => setShowArchived(e.target.checked)}
-                        className="mb-0"
-                    />
-                    <Button as={Link} to="/products/new" variant="accent" className="text-white shadow-sm">
-                        <i className="fas fa-plus me-1"></i> Nouveau Produit
-                    </Button>
-                </div>
             </div>
 
             <ListTable
@@ -166,6 +166,22 @@ const ProductList = () => {
                 columns={columns}
                 searchPlaceholder="Rechercher un modèle, GTIN, marque..."
                 emptyMessage={showArchived ? "Aucun produit archivé" : "Aucun produit actif"}
+                compact
+                toolbarActions={
+                    <>
+                        <Form.Check
+                            type="switch"
+                            id="show-archived"
+                            label="Voir les archives"
+                            checked={showArchived}
+                            onChange={(e) => setShowArchived(e.target.checked)}
+                            className="mb-0"
+                        />
+                        <Button as={Link} to="/products/new" variant="accent" className="text-white shadow-sm">
+                            <i className="fas fa-plus me-1"></i> Nouveau Produit
+                        </Button>
+                    </>
+                }
             />
         </div>
     );
