@@ -56,7 +56,7 @@ const ProductList = () => {
         const badges = {
             DRAFT: { bg: 'secondary', text: 'Brouillon' },
             COMPLETE: { bg: 'success', text: 'Complet' },
-            LOCKED: { bg: 'primary', text: 'Verrouillé' },
+            LOCKED: { bg: 'info', text: 'Verrouillé' },
         };
         const badge = badges[status] || badges.DRAFT;
         return <Badge bg={badge.bg}>{badge.text}</Badge>;

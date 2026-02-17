@@ -6,10 +6,10 @@
 // 2. Light Theme Variables
 $primary: #0F172A;
 $success: #71e089;
-$info: #4daaf7;
+$info: #46bbff;
 $warning: #db7940;
 $danger: #ef4444;
-$accent: #4daaf7;
+$accent: $info;
 
 $body-bg: #f1f5f9;
 $body-color: #0f172a;
@@ -66,7 +66,7 @@ $theme-colors: map-merge($theme-colors, ("accent": $accent));
 
   --bg-sidebar: #{$primary};
   --bg-navbar: #ffffff;
-  --accent-color: #3b82f6;
+  --accent-color: #{$accent};
 
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   --close-filter: none;
@@ -129,13 +129,21 @@ body {
   }
 }
 
+
 .main-content {
   flex: 1;
   margin-left: var(--sidebar-width);
   background-color: var(--bs-body-bg);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 
   &.collapsed {
     margin-left: var(--sidebar-collapsed-width);
+  }
+
+  &.no-sidebar {
+    margin-left: 0;
   }
 
   @media (max-width: 991.98px) {
@@ -157,6 +165,7 @@ body {
 
 .content-area {
   padding: 2rem;
+  flex: 1;
 }
 
 // Component Fixes Finales
@@ -181,8 +190,63 @@ body {
   }
 }
 
+// 9. Premium Badges
+.badge {
+  font-weight: 700;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+
+  @each $color, $value in $theme-colors {
+    &.bg-#{$color} {
+      background-color: rgba($value, 0.2) !important;
+      color: $value !important;
+      border: 1px solid rgba($value, 0.4) !important;
+    }
+  }
+
+  &.bg-secondary {
+    background-color: rgba($gray-600, 0.1) !important;
+    color: $gray-600 !important;
+    border: 1px solid rgba($gray-600, 0.2) !important;
+  }
+
+  &.bg-light {
+    background-color: rgba($gray-200, 0.3) !important;
+    color: $gray-700 !important;
+    border: 1px solid rgba($gray-300, 0.4) !important;
+  }
+
+  &.bg-dark {
+    background-color: rgba($white, 0.05) !important;
+    color: var(--bs-body-color) !important;
+    border: 1px solid rgba($white, 0.2) !important;
+  }
+}
+
+[data-bs-theme="dark"] {
+  .badge.bg-dark {
+    background-color: rgba($white, 0.1) !important;
+    color: $gray-300 !important;
+    border: 1px solid rgba($white, 0.2) !important;
+  }
+
+  .badge.bg-light {
+    background-color: rgba($white, 0.05) !important;
+    color: $gray-400 !important;
+    border: 1px solid rgba($white, 0.1) !important;
+  }
+}
+
 .footer {
   background-color: var(--bg-navbar);
   border-top: 1px solid var(--bs-border-color);
-  padding: 2rem;
+
+  .hover-primary:hover {
+    color: var(--bs-primary) !important;
+  }
+
+  .hover-info:hover {
+    color: var(--bs-info) !important;
+  }
 }

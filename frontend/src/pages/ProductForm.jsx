@@ -142,7 +142,7 @@ const ProductForm = () => {
                     </h2>
                 </div>
                 <div className="d-flex gap-2">
-                    {isArchived && <Badge bg="warning" className="text-dark">Archivé</Badge>}
+                    {isArchived && <Badge bg="warning">Archivé</Badge>}
                     {status === 'DRAFT' && <Badge bg="secondary">Brouillon</Badge>}
                     {status === 'COMPLETE' && <Badge bg="success">Prêt</Badge>}
                     {status === 'LOCKED' && <Badge bg="primary"><i className="fas fa-lock me-1"></i> Verrouillé (DPP Généré)</Badge>}

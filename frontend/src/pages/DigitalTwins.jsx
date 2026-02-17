@@ -95,7 +95,7 @@ const DigitalTwins = () => {
                             href={item.qr_code}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-sm btn-outline-primary py-0 px-2 d-inline-flex align-items-center"
+                            className="btn btn-sm btn-outline-info py-0 px-2 d-inline-flex align-items-center"
                             aria-label={`Télécharger le QR code pour ${item.serial_number}`}
                             title="Télécharger le QR Code"
                         >
@@ -106,9 +106,8 @@ const DigitalTwins = () => {
                         as={Link}
                         to={`/twin/${id}`}
                         target="_blank"
-                        variant="link"
-                        className="btn btn-sm text-decoration-none fw-bold p-0 d-inline-flex align-items-center"
-                        style={{ color: '#3b82f6' }}
+                        variant="outline-info"
+                        className="btn btn-sm text-decoration-none p-0 d-inline-flex align-items-center"
                         title="Voir la page consommateur"
                     >
                         <i className="fa-solid fa-eye me-1"></i> Visualiser

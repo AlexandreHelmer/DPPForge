@@ -27,7 +27,7 @@ const Dashboard = () => {
         const badges = {
             DRAFT: { bg: 'secondary', text: 'Brouillon' },
             COMPLETE: { bg: 'success', text: 'Complet' },
-            LOCKED: { bg: 'primary', text: 'Verrouillé' },
+            LOCKED: { bg: 'info', text: 'Verrouillé' },
         };
         const badge = badges[status] || { bg: 'secondary', text: status };
         return <Badge bg={badge.bg}>{badge.text}</Badge>;
@@ -90,7 +90,7 @@ const Dashboard = () => {
                     </Card>
                 </Col>
                 <Col md={3}>
-                    <Card className="text-center h-100 shadow-sm border-0 border-bottom border-primary border-4 stat-card">
+                    <Card className="text-center h-100 shadow-sm border-0 border-bottom border-info border-4 stat-card">
                         <Card.Body className="d-flex flex-column justify-content-center py-4">
                             <div className="display-6 text-info mb-2 opacity-75">
                                 <i className="fas fa-qrcode"></i>
@@ -107,17 +107,17 @@ const Dashboard = () => {
                     <Card className="border-0 shadow-sm h-100">
                         <Card.Header className="py-3 fw-bold border-bottom-0">Répartition par Statut</Card.Header>
                         <Card.Body className="pt-0">
-                            <div className="status-item d-flex justify-content-between align-items-center mb-3 p-3 bg-light-subtle rounded">
+                            <div className="status-item d-flex justify-content-between align-items-center mb-3 p-3 border-info rounded">
                                 <span><i className="fas fa-file-pen me-2 text-muted"></i> Brouillon</span>
-                                <Badge bg="secondary" className="px-3">{stats.products_by_status.draft}</Badge>
+                                <Badge bg="info" className="px-3">{stats.products_by_status.draft}</Badge>
                             </div>
-                            <div className="status-item d-flex justify-content-between align-items-center mb-3 p-3 bg-light-subtle rounded">
+                            <div className="status-item d-flex justify-content-between align-items-center mb-3 p-3 border-info rounded">
                                 <span><i className="fas fa-circle-check me-2 text-success"></i> Complet</span>
                                 <Badge bg="success" className="px-3">{stats.products_by_status.complete}</Badge>
                             </div>
-                            <div className="status-item d-flex justify-content-between align-items-center p-3 bg-light-subtle rounded">
-                                <span><i className="fas fa-lock me-2 text-primary"></i> Verrouillé (DPP)</span>
-                                <Badge bg="primary" className="px-3">{stats.products_by_status.locked}</Badge>
+                            <div className="status-item d-flex justify-content-between align-items-center p-3 border-info rounded">
+                                <span><i className="fas fa-lock me-2 text-warning"></i> Verrouillé (DPP)</span>
+                                <Badge bg="warning" className="px-3">{stats.products_by_status.locked}</Badge>
                             </div>
                         </Card.Body>
                     </Card>
@@ -140,7 +140,7 @@ const Dashboard = () => {
                                 <div className="border-start opacity-25"></div>
                                 <div>
                                     <div className="text-muted small text-uppercase">Total cumulé</div>
-                                    <h2 className="fw-bold text-primary">{stats.qr_codes.total}</h2>
+                                    <h2 className="fw-bold text-info">{stats.qr_codes.total}</h2>
                                 </div>
                             </div>
                             <div className="mt-4 p-3 bg-info bg-opacity-10 rounded text-center small text-info">

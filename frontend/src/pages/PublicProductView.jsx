@@ -64,7 +64,7 @@ const PublicProductView = () => {
             <Row className="g-4">
                 <Col lg={7}>
                     <Card className="border-0 shadow-sm mb-4 h-100 p-3">
-                        <Card.Header className="bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                        <Card.Header className="border-0 bg-transparent py-3 d-flex justify-content-between align-items-center">
                             <h5 className="mb-0 fw-bold">Spécifications du Modèle</h5>
                             <i className="fas fa-info-circle text-muted"></i>
                         </Card.Header>
@@ -94,7 +94,7 @@ const PublicProductView = () => {
                 </Col>
 
                 <Col lg={5}>
-                    <Card className="border-0 shadow-sm bg-primary text-white h-100 p-3">
+                    <Card className="border-0 shadow-sm bg-primary text-light h-100 p-3">
                         <Card.Header className="bg-transparent border-0 py-3">
                             <h5 className="mb-0 fw-bold">Identité Digital Twin</h5>
                         </Card.Header>
@@ -107,7 +107,7 @@ const PublicProductView = () => {
                             <hr className="opacity-25" />
 
                             <div className="row mt-4">
-                                <div className="col-6 border-end border-white border-opacity-25">
+                                <div className="col-6 border-end border-light border-opacity-25">
                                     <label className="small text-uppercase opacity-75 d-block mb-1">Date de production</label>
                                     <div className="fw-bold">{creationDate.toLocaleDateString('fr-FR')}</div>
                                 </div>
@@ -130,15 +130,16 @@ const PublicProductView = () => {
             </Row>
 
             <Card className="mt-5 border-0 shadow-sm p-3">
-                <Card.Header className="bg-white border-0 py-3">
+                <Card.Header className="bg-transparent border-0 py-3">
                     <h5 className="mb-0 fw-bold">Composition & Matériaux</h5>
                 </Card.Header>
                 <Card.Body>
                     {product_data.components && product_data.components.length > 0 ? (
                         <Table responsive hover className="mt-2">
-                            <thead className="table-light">
+                            <thead className="">
                                 <tr>
                                     <th className="py-3">Désignation</th>
+                                    <th className="py-3">Composition</th>
                                     <th className="py-3 text-center">Origine</th>
                                     <th className="py-3 text-end">Certifications</th>
                                 </tr>
@@ -148,13 +149,37 @@ const PublicProductView = () => {
                                     <tr key={comp.id}>
                                         <td className="py-3">
                                             <div className="fw-bold">{comp.name}</div>
-                                            <div className="small text-muted">{comp.manufacturer}</div>
+                                            <div className="small">{comp.manufacturer}</div>
+                                        </td>
+                                        <td className="py-3">
+                                            <div className="small">
+                                                {comp.material_composition && Object.entries(comp.material_composition).length > 0 ? (
+                                                    Object.entries(comp.material_composition).map(([mat, pct]) => (
+                                                        <div key={mat} className="d-flex justify-content-between" style={{ maxWidth: '150px' }}>
+                                                            <span>{mat}</span>
+                                                            <span className="fw-bold ms-2">{pct}%</span>
+                                                        </div>
+                                                    ))
+                                                ) : <span className="text-muted italic">Non spécifiée</span>}
+                                            </div>
                                         </td>
                                         <td className="py-3 text-center align-middle">
-                                            <Badge bg="light" className="text-dark border">{comp.origin_country || 'NC'}</Badge>
+                                            <Badge bg="light">{comp.origin_country || 'NC'}</Badge>
                                         </td>
                                         <td className="py-3 text-end align-middle">
-                                            <span className="badge rounded-pill bg-success bg-opacity-10 text-success p-2">Conforme</span>
+                                            {comp.certifications && comp.certifications.length > 0 ? (
+                                                <div className="d-flex flex-wrap justify-content-end gap-1">
+                                                    {comp.certifications.map(cert => (
+                                                        <Badge key={cert} bg="info" style={{ fontSize: '0.7rem' }}>
+                                                            {cert}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <Badge bg="success" style={{ fontSize: '0.7rem' }}>
+                                                    CONFORME
+                                                </Badge>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -166,7 +191,7 @@ const PublicProductView = () => {
                 </Card.Body>
             </Card>
 
-            <Card className="mt-5 border-0 shadow-sm bg-light">
+            <Card className="mt-5 border-0 shadow-sm">
                 <Card.Header className="bg-transparent border-0 py-3 d-flex align-items-center">
                     <h5 className="mb-0 fw-bold">Données Structurées JSON-LD</h5>
                     <Badge bg="success" className="ms-3">Format Européen</Badge>
@@ -178,10 +203,6 @@ const PublicProductView = () => {
                     </pre>
                 </Card.Body>
             </Card>
-
-            <footer className="mt-5 text-center text-muted small">
-                © {new Date().getFullYear()} DPP Manager Platform &bull; Passeport Numérique du Produit
-            </footer>
         </Container>
     );
 };

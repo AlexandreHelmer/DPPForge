@@ -484,7 +484,7 @@ const SupplierForm = () => {
                                         <tr>
                                             <td className="fw-medium">Certifications</td>
                                             <td>{submittedData.certifications.map(c => (
-                                                <Badge key={c} bg="light" className="text-dark border me-1">{c}</Badge>
+                                                <Badge key={c} bg="light" className="me-1">{c}</Badge>
                                             ))}</td>
                                         </tr>
                                     )}
