@@ -25,6 +25,10 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen, onCloseMobile }) => {
                     <i className="fas fa-chart-line fw-fixed"></i>
                     <span>Tableau de bord</span>
                 </Nav.Link>
+                <Nav.Link as={NavLink} to="/products" title="Produits" onClick={onCloseMobile}>
+                    <i className="fas fa-box fw-fixed"></i>
+                    <span>Produits</span>
+                </Nav.Link>
                 <div className="nav-group">
                     <Nav.Link as={NavLink} to="/components" title="Matériaux & Composants" onClick={onCloseMobile}>
                         <i className="fas fa-microchip fw-fixed"></i>
@@ -37,10 +41,6 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen, onCloseMobile }) => {
                         </Nav.Link>
                     </div>
                 </div>
-                <Nav.Link as={NavLink} to="/products" title="Produits" onClick={onCloseMobile}>
-                    <i className="fas fa-box fw-fixed"></i>
-                    <span>Produits</span>
-                </Nav.Link>
                 <Nav.Link as={NavLink} to="/qr-generator" title="Digital Twins" onClick={onCloseMobile}>
                     <i className="fas fa-qrcode fw-fixed"></i>
                     <span>Digital Twins</span>

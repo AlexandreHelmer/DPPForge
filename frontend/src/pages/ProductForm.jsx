@@ -156,7 +156,7 @@ const ProductForm = () => {
                 <Row>
                     <Col md={8}>
                         <Card className="mb-4">
-                            <Card.Header className="bg-white py-3 fw-bold">Identification du modèle</Card.Header>
+                            <Card.Header className="py-3 fw-bold">Identification du modèle</Card.Header>
                             <Card.Body>
                                 <Form.Group className="mb-3">
                                     <Form.Label className="fw-medium">Nom commercial du produit *</Form.Label>
@@ -240,7 +240,7 @@ const ProductForm = () => {
                         </Card>
 
                         <Card className="mb-4">
-                            <Card.Header className="bg-white py-3 fw-bold d-flex justify-content-between">
+                            <Card.Header className="py-3 fw-bold d-flex justify-content-between">
                                 Composants & Matériaux
                                 <Badge bg="info">{formData.components.length}</Badge>
                             </Card.Header>
@@ -301,7 +301,7 @@ const ProductForm = () => {
                                 <div className="d-grid gap-3">
                                     <Button
                                         type="submit"
-                                        variant="outline-primary"
+                                        variant="outline-info"
                                         disabled={loading || isLocked}
                                     >
                                         {loading ? 'Traitement...' : 'Enregistrer le brouillon'}
@@ -309,7 +309,7 @@ const ProductForm = () => {
 
                                     {!isLocked && (
                                         <Button
-                                            variant="dark"
+                                            variant="warning"
                                             size="lg"
                                             onClick={() => setShowLockModal(true)}
                                             disabled={loading}
