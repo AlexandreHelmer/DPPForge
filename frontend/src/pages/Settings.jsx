@@ -183,7 +183,7 @@ const Settings = () => {
         try {
             await authService.deleteAccount(deletePassword);
             // Redirect will happen after logout in authService
-            window.location.href = '/login?deleted=true';
+            window.location.href = '/app/login?deleted=true';
         } catch (err) {
             alert(err.response?.data?.error || 'Erreur lors de la suppression du compte');
         } finally {
@@ -466,7 +466,7 @@ const Settings = () => {
                 </Tab>
 
                 {/* Danger Zone Tab */}
-                <Tab eventKey="danger" title="Zone de Danger">
+                <Tab eventKey="danger" title="Suppression du compte">
                     <Card border="danger">
                         <Card.Header className="bg-danger text-white">Supprimer mon compte</Card.Header>
                         <Card.Body>
