@@ -4,7 +4,7 @@
 @import "bootstrap/scss/functions";
 
 // 2. Light Theme Variables
-$primary: #46bbff;
+$primary: #31b3ff;
 $success: #71e089;
 $info: #46bbff;
 $warning: #db7940;
@@ -64,7 +64,7 @@ $theme-colors: map-merge($theme-colors, ("accent": $accent));
   --sidebar-collapsed-width: #{$sidebar-collapsed-width};
   --navbar-height: #{$navbar-height};
 
-  --bg-sidebar: #{$primary};
+  --bg-sidebar: #0f172a;
   --bg-navbar: #ffffff;
   --accent-color: #{$accent};
 
@@ -129,7 +129,6 @@ body {
   }
 }
 
-
 .main-content {
   flex: 1;
   margin-left: var(--sidebar-width);
@@ -166,6 +165,77 @@ body {
 .content-area {
   padding: 2rem;
   flex: 1;
+}
+
+@media (max-width: 991.98px) {
+  .app-wrapper {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    z-index: 10;
+    padding: 0.75rem 0.75rem 0.5rem;
+
+    &.collapsed {
+      width: 100%;
+
+      .sidebar-brand span,
+      .nav-link span {
+        display: inline;
+      }
+    }
+
+    .sidebar-brand {
+      margin-bottom: 0.75rem !important;
+    }
+
+    .nav {
+      flex-direction: row !important;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .nav-group {
+      display: contents;
+    }
+
+    .nav-submenu {
+      display: contents;
+    }
+
+    .nav-link {
+      width: auto;
+      padding: 0.45rem 0.7rem;
+      font-size: 0.9rem;
+      border-radius: 999px;
+
+      .fw-fixed {
+        margin-right: 0.35rem;
+      }
+    }
+
+    .mt-auto {
+      margin-top: 0.4rem !important;
+      border-top: 0 !important;
+      padding-top: 0 !important;
+    }
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  .top-navbar {
+    position: static;
+  }
+
+  .content-area {
+    padding: 1rem;
+  }
 }
 
 // Component Fixes Finales
