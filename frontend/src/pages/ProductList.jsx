@@ -1,21 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Badge, Form } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import { Button, Badge, Spinner } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { productsService } from '../services/products';
 import ListTable from '../components/ListTable';
+import CsvModal from '../components/CsvModal';
+import PageToolbar from '../components/PageToolbar';
 
 const ProductList = () => {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
     const [showArchived, setShowArchived] = useState(false);
+    const [showCsvModal, setShowCsvModal] = useState(false);
 
     useEffect(() => {
         loadProducts();
     }, []);
 
     const loadProducts = async () => {
-        setLoading(true);
+        // Only show full page spinner on initial load
+        if (products.length === 0) setLoading(true);
         try {
             const data = await productsService.getProducts();
             setProducts(Array.isArray(data) ? data : data.results || []);
@@ -116,6 +121,7 @@ const ProductList = () => {
         },
         {
             header: 'Actions',
+
             key: 'id',
             className: 'text-end px-4',
             render: (id, item) => (
@@ -148,9 +154,15 @@ const ProductList = () => {
         }
     ];
 
-    const filteredProducts = products.filter(p => showArchived ? p.is_archived : !p.is_archived);
+    const filteredProducts = products.filter(p => {
+        const matchesArchive = showArchived ? p.is_archived : !p.is_archived;
+        if (!matchesArchive) return false;
 
-    if (loading) return <div className="text-center p-5">Chargement de votre catalogue...</div>;
+        const search = searchTerm.toLowerCase();
+        return p.name.toLowerCase().includes(search) ||
+            (p.gtin && p.gtin.toLowerCase().includes(search)) ||
+            (p.brand && p.brand.toLowerCase().includes(search));
+    });
 
     return (
         <div className="animate-fade-in">
@@ -161,27 +173,41 @@ const ProductList = () => {
                 </div>
             </div>
 
-            <ListTable
-                items={filteredProducts}
-                columns={columns}
+            <PageToolbar
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
                 searchPlaceholder="Rechercher un modèle, GTIN, marque..."
-                emptyMessage={showArchived ? "Aucun produit archivé" : "Aucun produit actif"}
-                compact
-                toolbarActions={
-                    <>
-                        <Form.Check
-                            type="switch"
-                            id="show-archived"
-                            label="Voir les archives"
-                            checked={showArchived}
-                            onChange={(e) => setShowArchived(e.target.checked)}
-                            className="mb-0"
-                        />
-                        <Button as={Link} to="/products/new" variant="accent" className="text-white shadow-sm">
-                            <i className="fas fa-plus me-1"></i> Nouveau Produit
-                        </Button>
-                    </>
-                }
+                showArchived={showArchived}
+                onArchivedChange={setShowArchived}
+                onCsvClick={() => setShowCsvModal(true)}
+                onNewClick={() => navigate('/products/new')}
+                newLabel="Nouveau Produit"
+            />
+
+            {loading ? (
+                <div className="text-center p-5 bg-white rounded-4 shadow-sm">
+                    <Spinner animation="border" variant="primary" className="mb-2" />
+                    <p className="text-muted mb-0">Chargement de votre catalogue...</p>
+                </div>
+            ) : (
+                <ListTable
+                    items={filteredProducts}
+                    columns={columns}
+                    emptyMessage={showArchived ? "Aucun produit archivé" : "Aucun produit actif"}
+                    compact
+                    hideSearch={true}
+                />
+
+            )}
+
+            {/* CSV Import/Export modal - MOVED OUTSIDE LOADING BLOCK to prevent unmount */}
+            <CsvModal
+                show={showCsvModal}
+                onHide={() => setShowCsvModal(false)}
+                entityName="Produits"
+                entityPath="products"
+                importable={true}
+                onImportSuccess={loadProducts}
             />
         </div>
     );

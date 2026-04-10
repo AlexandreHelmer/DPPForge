@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form, Alert, Badge, InputGroup } from 'react-bootstrap';
+import { Button, Modal, Form, Alert, Badge, InputGroup, Spinner } from 'react-bootstrap';
 import { productsService } from '../services/products';
 import ListTable from '../components/ListTable';
 import ComponentForm from '../components/ComponentForm';
+import CsvModal from '../components/CsvModal';
+import PageToolbar from '../components/PageToolbar';
 
 const ComponentList = () => {
     const [components, setComponents] = useState([]);
     const [showArchived, setShowArchived] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showCsvModal, setShowCsvModal] = useState(false);
+    
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -41,7 +46,7 @@ const ComponentList = () => {
     }, []);
 
     const loadComponents = async () => {
-        setListLoading(true);
+        if (components.length === 0) setListLoading(true);
         try {
             const data = await productsService.getComponents();
             setComponents(Array.isArray(data) ? data : data.results || []);
@@ -300,15 +305,22 @@ const ComponentList = () => {
         }
     ];
 
-    if (listLoading) return <div className="text-center p-5">Chargement de la bibliothèque...</div>;
-    const filteredComponents = components.filter(c => showArchived ? c.is_archived : !c.is_archived);
+    const filteredComponents = components.filter(c => {
+        const matchesArchive = showArchived ? c.is_archived : !c.is_archived;
+        if (!matchesArchive) return false;
+        
+        const search = searchTerm.toLowerCase();
+        return c.name.toLowerCase().includes(search) || 
+               (c.manufacturer && c.manufacturer.toLowerCase().includes(search)) ||
+               (c.gtin && c.gtin.toLowerCase().includes(search));
+    });
 
     const editingComponent = components.find(c => c.id === editingId);
     const isReadOnlyModal = !!editingComponent && (editingComponent.supplier_locked || editingComponent.is_brand_locked);
 
     return (
-        <div className="animate-fade-in">
-            <div className="page-header">
+        <div className="animate-fade-in pb-5">
+            <div className="page-header mb-4">
                 <div>
                     <h1 className="mb-0">Matériaux & Composants</h1>
                     <p className="text-muted mb-0">Gérez les matières premières, pièces et composants de vos fournisseurs.</p>
@@ -322,27 +334,41 @@ const ComponentList = () => {
                 </Alert>
             )}
 
-            <ListTable
-                items={filteredComponents}
-                columns={columns}
+            <PageToolbar 
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
                 searchPlaceholder="Rechercher par nom, fabricant, origine..."
-                emptyMessage={showArchived ? "Aucun composant archivé" : "Aucun composant actif"}
-                compact
-                toolbarActions={
-                    <>
-                        <Form.Check
-                            type="switch"
-                            id="show-archived-components"
-                            label="Voir les archives"
-                            checked={showArchived}
-                            onChange={(e) => setShowArchived(e.target.checked)}
-                            className="mb-0"
-                        />
-                        <Button onClick={() => { resetForm(); setShowModal(true); }} variant="accent" className="text-white shadow-sm">
-                            <i className="fas fa-plus me-1"></i> Nouveau composant
-                        </Button>
-                    </>
-                }
+                showArchived={showArchived}
+                onArchivedChange={setShowArchived}
+                onCsvClick={() => setShowCsvModal(true)}
+                onNewClick={() => { resetForm(); setShowModal(true); }}
+                newLabel="Nouveau Composant"
+            />
+
+            {listLoading ? (
+                <div className="text-center p-5 bg-white rounded-4 shadow-sm">
+                    <Spinner animation="border" variant="primary" className="mb-2" />
+                    <p className="text-muted mb-0">Chargement de la bibliothèque...</p>
+                </div>
+            ) : (
+                <ListTable
+                    items={filteredComponents}
+                    columns={columns}
+                    emptyMessage={showArchived ? "Aucun composant archivé" : "Aucun composant actif"}
+                    compact
+                    hideSearch={true}
+                />
+
+            )}
+
+            {/* CSV Import/Export modal */}
+            <CsvModal
+                show={showCsvModal}
+                onHide={() => setShowCsvModal(false)}
+                entityName="Composants"
+                entityPath="components"
+                importable={true}
+                onImportSuccess={loadComponents}
             />
 
             {/* Component edit/create modal */}

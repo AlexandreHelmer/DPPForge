@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Badge, Modal, Form, Alert, InputGroup } from 'react-bootstrap';
+import { Button, Badge, Modal, Form, Alert, InputGroup, Spinner } from 'react-bootstrap';
 import { productsService } from '../services/products';
 import ListTable from '../components/ListTable';
+import CsvModal from '../components/CsvModal';
+import PageToolbar from '../components/PageToolbar';
 
 const SupplierLinks = () => {
     const [links, setLinks] = useState([]);
@@ -12,6 +14,8 @@ const SupplierLinks = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [copiedId, setCopiedId] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showCsvModal, setShowCsvModal] = useState(false);
 
     const [formData, setFormData] = useState({
         component: '',
@@ -25,7 +29,7 @@ const SupplierLinks = () => {
     }, []);
 
     const loadData = async () => {
-        setListLoading(true);
+        if (links.length === 0) setListLoading(true);
         try {
             const [linksData, compsData] = await Promise.all([
                 productsService.getSupplierLinks(),
@@ -79,8 +83,10 @@ const SupplierLinks = () => {
     const handleCopy = (url, id) => {
         navigator.clipboard?.writeText(url);
         setCopiedId(id);
+        setSuccess(`Lien copié dans le presse-papier : ${url}`);
         setTimeout(() => setCopiedId(null), 2000);
     };
+
 
     const resetForm = () => {
         setFormData({
@@ -188,24 +194,18 @@ const SupplierLinks = () => {
         }
     ];
 
-    if (listLoading) return <div className="text-center p-5">Chargement des liens fournisseurs...</div>;
+    const filteredLinks = links.filter(link => {
+        const search = searchTerm.toLowerCase();
+        return link.component_name.toLowerCase().includes(search) || 
+               (link.supplier_email && link.supplier_email.toLowerCase().includes(search));
+    });
 
     return (
-        <div className="animate-fade-in">
-            <div className="page-header">
+        <div className="animate-fade-in pb-5">
+            <div className="page-header mb-4">
                 <div>
                     <h1 className="mb-0">Liens Fournisseurs</h1>
-                    <p className="text-muted mb-0">Gérez les liens fournisseurs pour solliciter vos fournisseurs et compléter les informations composants.</p>
-                </div>
-                <div className="header-actions">
-                    <Button
-                        onClick={() => { resetForm(); setShowModal(true); }}
-                        variant="outline-info"
-                        className="shadow-sm"
-                        disabled={availableComponents.length === 0}
-                    >
-                        <i className="fas fa-link me-1"></i> Créer un lien fournisseur
-                    </Button>
+                    <p className="text-muted mb-0">Sollicitez vos fournisseurs pour compléter les fiches techniques.</p>
                 </div>
             </div>
 
@@ -215,12 +215,29 @@ const SupplierLinks = () => {
                 </Alert>
             )}
 
-            <ListTable
-                items={links}
-                columns={columns}
+            <PageToolbar
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
                 searchPlaceholder="Rechercher par composant..."
-                emptyMessage="Aucun lien fournisseur créé"
+                onCsvClick={() => setShowCsvModal(true)}
+                onNewClick={() => { resetForm(); setShowModal(true); }}
+                newLabel="Créer un lien fournisseur"
             />
+
+            {listLoading ? (
+                <div className="text-center p-5 bg-white rounded-4 shadow-sm">
+                    <Spinner animation="border" variant="primary" className="mb-2" />
+                    <p className="text-muted mb-0">Chargement des liens...</p>
+                </div>
+            ) : (
+                <ListTable
+                    items={filteredLinks}
+                    columns={columns}
+                    emptyMessage="Aucun lien fournisseur créé"
+                    compact
+                    hideSearch={true}
+                />
+            )}
 
             {/* Create Link Modal */}
             <Modal show={showModal} onHide={() => setShowModal(false)} centered>
@@ -301,6 +318,15 @@ const SupplierLinks = () => {
                     </Form>
                 </Modal.Body>
             </Modal>
+
+            {/* CSV Export-only modal */}
+            <CsvModal
+                show={showCsvModal}
+                onHide={() => setShowCsvModal(false)}
+                entityName="Liens Fournisseurs"
+                entityPath="supplier-links"
+                importable={false}
+            />
         </div>
     );
 };

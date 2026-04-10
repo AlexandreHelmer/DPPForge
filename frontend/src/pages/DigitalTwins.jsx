@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Button, Alert } from 'react-bootstrap';
+import { Card, Form, Button, Alert, Spinner, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { productsService } from '../services/products';
 import ListTable from '../components/ListTable';
+import CsvModal from '../components/CsvModal';
+import PageToolbar from '../components/PageToolbar';
 
 const DigitalTwins = () => {
     const [products, setProducts] = useState([]);
@@ -17,6 +19,9 @@ const DigitalTwins = () => {
     const [listLoading, setListLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showCsvModal, setShowCsvModal] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     useEffect(() => {
         loadProducts();
@@ -36,7 +41,7 @@ const DigitalTwins = () => {
     };
 
     const loadInstances = async () => {
-        setListLoading(true);
+        if (instances.length === 0) setListLoading(true);
         try {
             const data = await productsService.getDigitalTwins();
             setInstances(Array.isArray(data) ? data : data.results || []);
@@ -58,6 +63,7 @@ const DigitalTwins = () => {
             setSuccess(result.message || 'Digital Twins générés avec succès');
             setFormData({ ...formData, quantity: 10, production_batch: '' });
             loadInstances();
+            // Don't close modal immediately so user sees success message
         } catch (err) {
             setError(err.response?.data?.error || 'Erreur lors de la génération des Digital Twins');
         } finally {
@@ -131,28 +137,62 @@ const DigitalTwins = () => {
         }
     ];
 
+    const filteredInstances = instances.filter(item => {
+        const search = searchTerm.toLowerCase();
+        return item.product_name.toLowerCase().includes(search) || 
+               item.serial_number.toLowerCase().includes(search) ||
+               (item.production_batch && item.production_batch.toLowerCase().includes(search));
+    });
+
     return (
-        <div className="animate-fade-in">
-            <div className="page-header">
+        <div className="animate-fade-in pb-5">
+            <div className="page-header mb-4">
                 <h1 className="mb-0">Digital Twins Manager</h1>
             </div>
 
-            <Card className="mb-5 border-0 shadow-sm">
-                <Card.Header className="py-3 fw-bold border-bottom-0">Générer de nouveaux Digital Twins</Card.Header>
-                <Card.Body className="pt-0">
+            <PageToolbar
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                searchPlaceholder="Rechercher par numéro de série, produit, lot..."
+                onCsvClick={() => setShowCsvModal(true)}
+                onNewClick={() => { setError(''); setSuccess(''); setShowCreateModal(true); }}
+                newLabel="Générer des Digital Twins"
+            />
+
+            {listLoading ? (
+                <div className="text-center p-5 bg-white rounded-4 shadow-sm">
+                    <Spinner animation="border" variant="primary" className="mb-2" />
+                    <p className="text-muted mb-0">Chargement du registre...</p>
+                </div>
+            ) : (
+                <ListTable
+                    items={filteredInstances}
+                    columns={columns}
+                    emptyMessage="Aucun Digital Twin généré."
+                    compact
+                    hideSearch={true}
+                />
+            )}
+
+            {/* Creation Modal */}
+            <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)} size="lg" centered>
+                <Modal.Header closeButton className="border-0 pb-0">
+                    <Modal.Title className="fw-bold">Générer de nouveaux Digital Twins</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="pt-4">
                     {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
                     {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
                     <Form onSubmit={handleSubmit}>
                         <div className="row g-3">
-                            <div className="col-lg-6 col-md-12">
+                            <div className="col-md-8">
                                 <Form.Group className="mb-3">
                                     <Form.Label className="fw-medium small text-muted text-uppercase">Produit (Modèles verrouillés) *</Form.Label>
                                     <Form.Select
                                         value={formData.product}
                                         onChange={(e) => setFormData({ ...formData, product: e.target.value })}
                                         required
-                                        className="form-select-lg shadow-none"
+                                        className="form-select shadow-none"
                                     >
                                         <option value="">Choisir un modèle de produit...</option>
                                         {products.map((product) => (
@@ -166,7 +206,7 @@ const DigitalTwins = () => {
                                     </Form.Text>
                                 </Form.Group>
                             </div>
-                            <div className="col-lg-2 col-md-6">
+                            <div className="col-md-4">
                                 <Form.Group className="mb-3">
                                     <Form.Label className="fw-medium small text-muted text-uppercase">Quantité *</Form.Label>
                                     <Form.Control
@@ -176,23 +216,15 @@ const DigitalTwins = () => {
                                         value={formData.quantity}
                                         onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
                                         required
-                                        className="form-control-lg shadow-none"
+                                        className="shadow-none"
                                     />
                                 </Form.Group>
                             </div>
-                            <div className="col-lg-4 col-md-6">
-                                <label className="fw-medium small text-muted text-uppercase mb-2">Actions</label>
-                                <Button type="submit" variant="accent" size="lg" className="w-100 text-white shadow-sm" disabled={loading || !formData.product}>
-                                    {loading ? 'Génération...' : 'Générer les Digital Twins'}
-                                </Button>
-                            </div>
                         </div>
 
-                        <hr className="my-4 opacity-10" />
-
-                        <div className="row">
+                        <div className="row g-3 mt-1">
                             <div className="col-md-6">
-                                <Form.Group className="mb-0">
+                                <Form.Group className="mb-3">
                                     <Form.Label className="fw-medium small text-muted text-uppercase">Lot de production</Form.Label>
                                     <Form.Control
                                         type="text"
@@ -204,7 +236,7 @@ const DigitalTwins = () => {
                                 </Form.Group>
                             </div>
                             <div className="col-md-6">
-                                <Form.Group className="mb-0">
+                                <Form.Group className="mb-3">
                                     <Form.Label className="fw-medium small text-muted text-uppercase">Préfixe série (Optionnel)</Form.Label>
                                     <Form.Control
                                         type="text"
@@ -215,24 +247,25 @@ const DigitalTwins = () => {
                                 </Form.Group>
                             </div>
                         </div>
+
+                        <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <Button variant="light" onClick={() => setShowCreateModal(false)}>Fermer</Button>
+                            <Button type="submit" variant="accent" className="text-white px-4" disabled={loading || !formData.product}>
+                                {loading ? 'Génération...' : 'Générer les Digital Twins'}
+                            </Button>
+                        </div>
                     </Form>
-                </Card.Body>
-            </Card>
+                </Modal.Body>
+            </Modal>
 
-            <div className="d-flex justify-content-between align-items-center mb-4 mt-2">
-                <h2 className="h4 mb-0">Registre des Digital Twins</h2>
-            </div>
-
-            {listLoading ? (
-                <div className="text-center p-5">Chargement du registre...</div>
-            ) : (
-                <ListTable
-                    items={instances}
-                    columns={columns}
-                    searchPlaceholder="Rechercher par numéro de série, produit, lot..."
-                    emptyMessage="Aucun Digital Twin généré."
-                />
-            )}
+            {/* CSV Export-only modal */}
+            <CsvModal
+                show={showCsvModal}
+                onHide={() => setShowCsvModal(false)}
+                entityName="Digital Twins"
+                entityPath="digital-twins"
+                importable={false}
+            />
         </div>
     );
 };

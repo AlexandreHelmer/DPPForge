@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Button, Row, Col, Alert, Tabs, Tab, Badge, ListGroup } from 'react-bootstrap';
+import { Card, Form, Button, Row, Col, Alert, Tabs, Tab, Badge, ListGroup, Spinner } from 'react-bootstrap';
 import { FaGoogle, FaMicrosoft, FaGithub, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { authService } from '../services/auth';
+import { productsService } from '../services/products';
 
 const Settings = () => {
     const user = authService.getStoredUser();
@@ -33,6 +34,10 @@ const Settings = () => {
 
     // Appearance state
     const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem('theme') === 'dark');
+
+    // Data export state
+    const [exportLoading, setExportLoading] = useState(false);
+    const [exportStatus, setExportStatus] = useState({ type: '', message: '' });
 
     const toggleTheme = () => {
         const newTheme = !isDarkMode ? 'dark' : 'light';
@@ -202,6 +207,19 @@ const Settings = () => {
 
     const isProviderConnected = (provider) => {
         return socialAccounts.some(acc => acc.provider === provider);
+    };
+
+    const handleExportZip = async () => {
+        setExportLoading(true);
+        setExportStatus({ type: '', message: '' });
+        try {
+            await productsService.exportAllDataZip();
+            setExportStatus({ type: 'success', message: 'Export téléchargé avec succès !' });
+        } catch (err) {
+            setExportStatus({ type: 'danger', message: 'Erreur lors de l\'export des données.' });
+        } finally {
+            setExportLoading(false);
+        }
     };
 
     return (
@@ -459,6 +477,49 @@ const Settings = () => {
                             <div className="mt-4 p-3 bg-secondary-subtle rounded">
                                 <p className="mb-0 small text-muted">
                                     <strong>Astuce :</strong> Le mode sombre réduit la fatigue oculaire dans les environnements peu éclairés.
+                                </p>
+                            </div>
+                        </Card.Body>
+                    </Card>
+                </Tab>
+
+                {/* Data Export Tab */}
+                <Tab eventKey="data" title="Mes Données">
+                    <Card>
+                        <Card.Header>Exporter mes données</Card.Header>
+                        <Card.Body>
+                            {exportStatus.message && <Alert variant={exportStatus.type}>{exportStatus.message}</Alert>}
+
+                            <h5 className="mb-3">Télécharger l'ensemble de mes données</h5>
+                            <p className="text-muted small">
+                                Exportez toutes vos données au format <strong>.zip</strong>. L'archive contient :
+                            </p>
+                            <ul className="text-muted small mb-4">
+                                <li><strong>compte.json</strong> — Informations de votre entreprise</li>
+                                <li><strong>composants.csv</strong> — Tous vos composants et matériaux</li>
+                                <li><strong>produits.csv</strong> — L'intégralité de votre catalogue</li>
+                                <li><strong>digital_twins.csv</strong> — Registre de vos Digital Twins</li>
+                                <li><strong>liens_fournisseurs.csv</strong> — Historique des liens fournisseurs</li>
+                            </ul>
+
+                            <Button
+                                variant="primary"
+                                onClick={handleExportZip}
+                                disabled={exportLoading}
+                                className="d-flex align-items-center gap-2"
+                            >
+                                {exportLoading ? (
+                                    <><Spinner size="sm" animation="border" /> Préparation de l'archive…</>
+                                ) : (
+                                    <><i className="fas fa-file-zipper"></i> Exporter toutes mes données (.zip)</>
+                                )}
+                            </Button>
+
+                            <div className="mt-4 p-3 bg-secondary-subtle rounded">
+                                <p className="mb-0 small text-muted">
+                                    <strong>Droit à la portabilité :</strong> Conformément au RGPD, vous pouvez
+                                    récupérer vos données dans un format structuré et lisible par machine.
+                                    Les fichiers CSV sont compatibles avec Excel, Google Sheets, et tout tableur.
                                 </p>
                             </div>
                         </Card.Body>

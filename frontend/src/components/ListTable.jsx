@@ -16,8 +16,10 @@ const ListTable = ({
     emptyMessage = "Aucun résultat trouvé",
     pageSize = 10,
     toolbarActions = null,
-    compact = false
+    compact = false,
+    hideSearch = false
 }) => {
+
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -40,25 +42,28 @@ const ListTable = ({
 
     return (
         <div className="list-table-container">
-            <div className="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
-                <InputGroup style={{ maxWidth: '520px' }}>
-                    <InputGroup.Text className="border-end-0">
-                        <i className="fas fa-magnifying-glass"></i>
-                    </InputGroup.Text>
-                    <Form.Control
-                        type="text"
-                        placeholder={searchPlaceholder}
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                        className="border-start-0 ps-0"
-                    />
-                </InputGroup>
+            <div className={`d-flex align-items-center gap-3 mb-3 flex-wrap ${hideSearch ? 'justify-content-end' : 'justify-content-between'}`}>
+                {!hideSearch && (
+                    <InputGroup style={{ maxWidth: '520px' }}>
+                        <InputGroup.Text className="border-end-0">
+                            <i className="fas fa-magnifying-glass"></i>
+                        </InputGroup.Text>
+                        <Form.Control
+                            type="text"
+                            placeholder={searchPlaceholder}
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            className="border-start-0 ps-0"
+                        />
+                    </InputGroup>
+                )}
                 {toolbarActions && (
                     <div className="d-flex align-items-center gap-2 flex-wrap">
                         {toolbarActions}
                     </div>
                 )}
             </div>
+
 
             <div className="card border-0 shadow-sm overflow-hidden">
                 <Table hover responsive className={`mb-0 ${compact ? 'table-sm' : ''}`}>

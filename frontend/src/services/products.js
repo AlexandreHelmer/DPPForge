@@ -140,6 +140,56 @@ export const productsService = {
         const response = await api.post(`/api/public/supplier/${token}/submit/`, data);
         return response.data;
     },
+
+    // ---------------------------------------------------------------
+    // Export / Import
+    // ---------------------------------------------------------------
+
+    /** Download all user data as a .zip file */
+    async exportAllDataZip() {
+        const response = await api.get('/api/export/zip/', { responseType: 'blob' });
+        const url = window.URL.createObjectURL(response.data);
+        const link = document.createElement('a');
+        link.href = url;
+        // Extract filename from Content-Disposition header or use fallback
+        const disposition = response.headers['content-disposition'];
+        const filename = disposition
+            ? disposition.split('filename="')[1]?.replace('"', '') || 'dppforge_export.zip'
+            : 'dppforge_export.zip';
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    },
+
+    /** Download a CSV export for a given entity */
+    async exportCsv(entityPath) {
+        const response = await api.get(`/api/export/${entityPath}/csv/`, { responseType: 'blob' });
+        const url = window.URL.createObjectURL(response.data);
+        const link = document.createElement('a');
+        link.href = url;
+        const disposition = response.headers['content-disposition'];
+        const filename = disposition
+            ? disposition.split('filename="')[1]?.replace('"', '') || `${entityPath}.csv`
+            : `${entityPath}.csv`;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    },
+
+    /** Upload a CSV file to import data for a given entity */
+    async importCsv(entityPath, file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await api.post(`/api/import/${entityPath}/csv/`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    },
 };
 
 export default productsService;
+

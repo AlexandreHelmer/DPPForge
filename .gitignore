@@ -5,6 +5,7 @@ __pycache__/
 *.so
 .Python
 env/
+.venv/
 venv/
 ENV/
 build/
@@ -60,3 +61,5 @@ frontend/yarn.lock
 
 # QR Codes
 qr_codes/
+
+backend/env
