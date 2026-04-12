@@ -78,6 +78,15 @@ class SnapshotViewSet(viewsets.ModelViewSet):
         snapshot = serializer.save()
         return Response(SnapshotSerializer(snapshot).data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'])
+    def rename(self, request, pk=None):
+        """Rename a snapshot (human-friendly version label)."""
+        snapshot = self.get_object()
+        name = request.data.get('name', '')
+        snapshot.name = name
+        snapshot.save(update_fields=['name'])
+        return Response(SnapshotSerializer(snapshot).data, status=status.HTTP_200_OK)
+
 
 class DigitalTwinViewSet(viewsets.ModelViewSet):
     """CRUD for twins generated from snapshots."""

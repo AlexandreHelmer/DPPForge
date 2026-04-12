@@ -72,16 +72,18 @@ class SnapshotSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Snapshot
-        fields = ['id', 'company', 'main_product', 'main_product_name', 'created_at', 'payload']
+        fields = ['id', 'company', 'main_product', 'main_product_name', 'name', 'created_at', 'payload']
         read_only_fields = ['id', 'company', 'created_at', 'payload']
 
 
 class SnapshotCreateSerializer(serializers.Serializer):
     """Create a snapshot from a main product (Item)."""
     main_product = serializers.PrimaryKeyRelatedField(queryset=Item.objects.all())
+    name = serializers.CharField(max_length=255, required=False, allow_blank=True)
 
     def create(self, validated_data):
         main_product = validated_data['main_product']
+        name = validated_data.get('name', '')
         request = self.context['request']
 
         # Basic ownership guard
@@ -93,6 +95,7 @@ class SnapshotCreateSerializer(serializers.Serializer):
         snapshot = Snapshot.objects.create(
             company=request.user,
             main_product=main_product,
+            name=name,
             payload=payload,
         )
         return snapshot

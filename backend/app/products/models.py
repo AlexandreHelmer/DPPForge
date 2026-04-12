@@ -132,6 +132,13 @@ class Snapshot(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Date de snapshot')
 
+    name = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name='Nom de version'
+    )
+
     # Deep-copied payload (like a DPP template, without manufacturing date & serial)
     payload = models.JSONField(
         default=dict,

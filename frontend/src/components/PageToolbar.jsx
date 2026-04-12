@@ -10,18 +10,21 @@ const PageToolbar = ({
     searchTerm,
     onSearchChange,
     searchPlaceholder = "Rechercher...",
+    hideSearch = false,
     showArchived,
     onArchivedChange,
     onCsvClick,
     onNewClick,
     newLabel = "Nouveau",
-    extraActions = null
+    extraActions = null,
+    leftContent = null,
+    rightContent = null,
 }) => {
     return (
         <div className="card border-0 shadow-sm p-3 mb-4 rounded-4">
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
 
-                {/* Left side: New Button & Search */}
+                {/* Left side: New Button, optional custom content & Search */}
                 <div className="d-flex align-items-center gap-3 w-100 w-md-auto flex-grow-1">
                     {/* Primary Action Button - Leftmost */}
                     {onNewClick && (
@@ -36,21 +39,25 @@ const PageToolbar = ({
                         </Button>
                     )}
 
+                    {leftContent}
+
                     {/* Search Field */}
-                    <div className="w-100" style={{ maxWidth: '400px' }}>
-                        <InputGroup className="bg-muted rounded-3 border-1 border-light">
-                            <InputGroup.Text className="bg-transparent border-0 ps-3">
-                                <i className="fas fa-magnifying-glass text-muted"></i>
-                            </InputGroup.Text>
-                            <Form.Control
-                                type="text"
-                                placeholder={searchPlaceholder}
-                                value={searchTerm}
-                                onChange={(e) => onSearchChange(e.target.value)}
-                                className="bg-transparent border-0 py-2 shadow-none"
-                            />
-                        </InputGroup>
-                    </div>
+                    {!hideSearch && (
+                        <div className="w-100" style={{ maxWidth: '400px' }}>
+                            <InputGroup className="bg-muted rounded-3 border-1 border-light">
+                                <InputGroup.Text className="bg-transparent border-0 ps-3">
+                                    <i className="fas fa-magnifying-glass text-muted"></i>
+                                </InputGroup.Text>
+                                <Form.Control
+                                    type="text"
+                                    placeholder={searchPlaceholder}
+                                    value={searchTerm}
+                                    onChange={(e) => onSearchChange(e.target.value)}
+                                    className="bg-transparent border-0 py-2 shadow-none"
+                                />
+                            </InputGroup>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right side: Filters & Actions */}
@@ -88,6 +95,8 @@ const PageToolbar = ({
 
                         {/* Extra Actions */}
                         {extraActions}
+
+                        {rightContent}
                     </Stack>
                 </div>
             </div>

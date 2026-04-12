@@ -4,6 +4,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { productsService } from '../services/products';
 import ComponentForm from '../components/ComponentForm';
 import TagSuggestionInput from '../components/TagSuggestionInput';
+import HelpTip from '../components/HelpTip';
 import {
     EU_CERTIFICATION_SUGGESTIONS,
     EU_REGULATORY_CATEGORIES,
@@ -114,7 +115,7 @@ const ProductForm = () => {
                 savedProduct = await productsService.createProduct(formData);
             }
 
-            // New workflow: create a Snapshot (version) instead of locking.
+            // New workflow: create a Snapshot (version).
             if (shouldLock) {
                 try {
                     await productsService.createSnapshot({ main_product: savedProduct.id || id });
@@ -564,14 +565,23 @@ const ProductForm = () => {
                                     </Button>
 
                                     {!isLocked && (
-                                        <Button
-                                            variant="warning"
-                                            size="lg"
-                                            onClick={() => setShowLockModal(true)}
-                                            disabled={loading}
-                                        >
-                                            Valider & Verrouiller
-                                        </Button>
+                                        <div className="d-flex align-items-center gap-1">
+                                            <Button
+                                                variant="warning"
+                                                size="lg"
+                                                onClick={() => setShowLockModal(true)}
+                                                disabled={loading}
+                                            >
+                                                Créer un Snapshot
+                                            </Button>
+                                            <HelpTip
+                                                title="Snapshots (versions)"
+                                                content={
+                                                    "Un Snapshot est une version immuable du produit (et de ses composants) à un instant donné.\n\n" +
+                                                    "Tu peux continuer à modifier le produit courant après coup : les Snapshots servent de preuve/versioning et pour générer des Digital Twins."
+                                                }
+                                            />
+                                        </div>
                                     )}
 
                                     {isLocked && (
@@ -593,25 +603,25 @@ const ProductForm = () => {
                 </Row>
             </Form>
 
-            {/* Confirmation Modal for Locking */}
+            {/* Confirmation Modal for Snapshot creation */}
             <Modal show={showLockModal} onHide={() => setShowLockModal(false)} centered>
                 <Modal.Header closeButton>
-                    <Modal.Title>Confirmer le verrouillage</Modal.Title>
+                    <Modal.Title>Créer un Snapshot</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <div className="text-center mb-4">
                         <i className="fa-solid fa-triangle-exclamation text-warning display-4 mb-3"></i>
-                        <p className="fw-bold">Cette action est irréversible !</p>
+                        <p className="fw-bold">Le Snapshot est immuable</p>
                     </div>
-                    <p>Le verrouillage fige les données du produit (Nom, Marque, Composants) pour générer le Passeport Numérique conforme aux réglementations UE.</p>
-                    <p>Une fois verrouillé, vous ne pourrez plus modifier ces informations. Souhaitez-vous continuer ?</p>
+                    <p>Créer un Snapshot enregistre une version immuable du produit (et de sa composition) à l'instant T.</p>
+                    <p>Tu pourras continuer à modifier le produit courant ensuite. Souhaites-tu créer ce Snapshot maintenant ?</p>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="light" onClick={() => setShowLockModal(false)}>
                         Annuler
                     </Button>
                     <Button variant="dark" onClick={(e) => handleSubmit(e, true)} disabled={loading}>
-                        {loading ? 'Traitement...' : 'Oui, Valider & Verrouiller'}
+                        {loading ? 'Traitement...' : 'Oui, créer le Snapshot'}
                     </Button>
                 </Modal.Footer>
             </Modal>

@@ -66,6 +66,15 @@ export const productsService = {
         return response.data;
     },
 
+    async deleteSnapshot(id) {
+        await api.delete(`/api/snapshots/${id}/`);
+    },
+
+    async renameSnapshot(id, name) {
+        const response = await api.post(`/api/snapshots/${id}/rename/`, { name });
+        return response.data;
+    },
+
     async getSnapshots() {
         const response = await api.get('/api/snapshots/');
         return response.data;
@@ -182,4 +191,3 @@ export const productsService = {
 };
 
 export default productsService;
-

@@ -37,6 +37,11 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                     <i className="fas fa-qrcode fw-fixed"></i>
                     <span>Digital Twins</span>
                 </Nav.Link>
+
+                <Nav.Link as={NavLink} to="/versioning" title="Versioning">
+                    <i className="fas fa-code-branch fw-fixed"></i>
+                    <span>Versioning</span>
+                </Nav.Link>
             </Nav>
 
             <div className="mt-auto border-top pt-3">

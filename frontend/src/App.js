@@ -22,6 +22,7 @@ import DigitalTwins from './pages/DigitalTwins';
 import PublicProductView from './pages/PublicProductView';
 import SupplierLinks from './pages/SupplierLinks';
 import SupplierForm from './pages/SupplierForm';
+import Versioning from './pages/Versioning';
 
 // Components
 import Navbar from './components/Navbar';
@@ -144,6 +145,12 @@ function App() {
               <Route path="/supplier-links" element={
                 <PrivateRoute>
                   <SupplierLinks />
+                </PrivateRoute>
+              } />
+
+              <Route path="/versioning" element={
+                <PrivateRoute>
+                  <Versioning />
                 </PrivateRoute>
               } />
 
