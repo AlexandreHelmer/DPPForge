@@ -578,7 +578,7 @@ const ProductForm = () => {
                                                 title="Snapshots (versions)"
                                                 content={
                                                     "Un Snapshot est une version immuable du produit (et de ses composants) à un instant donné.\n\n" +
-                                                    "Tu peux continuer à modifier le produit courant après coup : les Snapshots servent de preuve/versioning et pour générer des Digital Twins."
+                                                    "Vous pouvez continuer à modifier le produit courant après coup : les Snapshots servent de preuve/versioning et pour générer des Digital Twins."
                                                 }
                                             />
                                         </div>

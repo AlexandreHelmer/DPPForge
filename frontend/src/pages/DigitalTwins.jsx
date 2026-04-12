@@ -7,8 +7,10 @@ import CsvModal from '../components/CsvModal';
 import PageToolbar from '../components/PageToolbar';
 
 const DigitalTwins = () => {
+    const [products, setProducts] = useState([]);
     const [snapshots, setSnapshots] = useState([]);
     const [formData, setFormData] = useState({
+        product: '',
         snapshot: '',
         quantity: 10,
         production_batch: '',
@@ -24,17 +26,53 @@ const DigitalTwins = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     useEffect(() => {
-        loadSnapshots();
+        loadProductsAndSnapshots();
         loadInstances();
     }, []);
 
-    const loadSnapshots = async () => {
+    const loadProductsAndSnapshots = async () => {
         try {
-            const data = await productsService.getSnapshots();
-            setSnapshots(Array.isArray(data) ? data : data.results || []);
+            const [p, s] = await Promise.all([
+                productsService.getProducts(),
+                productsService.getSnapshots(),
+            ]);
+            const ps = Array.isArray(p) ? p : p.results || [];
+            const ss = Array.isArray(s) ? s : s.results || [];
+            setProducts(ps);
+            setSnapshots(ss);
+
+            // Default product and snapshot (latest)
+            if (ps.length > 0) {
+                const defaultProductId = ps[0].id;
+                const productSnapshots = ss
+                    .filter((x) => x.main_product === defaultProductId)
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                const defaultSnapshotId = productSnapshots[0]?.id || '';
+                setFormData((prev) => ({
+                    ...prev,
+                    product: defaultProductId,
+                    snapshot: defaultSnapshotId,
+                }));
+            }
         } catch (err) {
-            console.error('Erreur lors du chargement des snapshots', err);
+            console.error('Erreur lors du chargement des produits/snapshots', err);
         }
+    };
+
+    const snapshotsForSelectedProduct = (snapshots || [])
+        .filter((s) => !formData.product || s.main_product === formData.product)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const handleChangeProduct = (productId) => {
+        const productSnapshots = (snapshots || [])
+            .filter((x) => x.main_product === productId)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const defaultSnapshotId = productSnapshots[0]?.id || '';
+        setFormData((prev) => ({
+            ...prev,
+            product: productId,
+            snapshot: defaultSnapshotId,
+        }));
     };
 
     const loadInstances = async () => {
@@ -153,7 +191,7 @@ const DigitalTwins = () => {
                 searchPlaceholder="Rechercher par numéro de série, produit, lot..."
                 onCsvClick={() => setShowCsvModal(true)}
                 onNewClick={() => { setError(''); setSuccess(''); setShowCreateModal(true); }}
-                newLabel="Générer des Digital Twins"
+                newLabel="Créer des Digital Twins"
             />
 
             {listLoading ? (
@@ -174,7 +212,7 @@ const DigitalTwins = () => {
             {/* Creation Modal */}
             <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)} size="lg" centered>
                 <Modal.Header closeButton className="border-0 pb-0">
-                    <Modal.Title className="fw-bold">Générer de nouveaux Digital Twins</Modal.Title>
+                    <Modal.Title className="fw-bold">Créer des Digital Twins</Modal.Title>
                 </Modal.Header>
                 <Modal.Body className="pt-4">
                     {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
@@ -182,9 +220,26 @@ const DigitalTwins = () => {
 
                     <Form onSubmit={handleSubmit}>
                         <div className="row g-3">
-                            <div className="col-md-8">
+                            <div className="col-md-6">
                                 <Form.Group className="mb-3">
-                                    <Form.Label className="fw-medium small text-muted text-uppercase">Snapshot (version) *</Form.Label>
+                                    <Form.Label className="fw-medium small text-muted text-uppercase">Produit *</Form.Label>
+                                    <Form.Select
+                                        value={formData.product}
+                                        onChange={(e) => handleChangeProduct(e.target.value)}
+                                        required
+                                        className="form-select shadow-none"
+                                    >
+                                        <option value="">Choisir un produit...</option>
+                                        {products.map((p) => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </Form.Select>
+                                </Form.Group>
+                            </div>
+
+                            <div className="col-md-6">
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="fw-medium small text-muted text-uppercase">Version (Snapshot) *</Form.Label>
                                     <Form.Select
                                         value={formData.snapshot}
                                         onChange={(e) => setFormData({ ...formData, snapshot: e.target.value })}
@@ -192,9 +247,9 @@ const DigitalTwins = () => {
                                         className="form-select shadow-none"
                                     >
                                         <option value="">Choisir une version...</option>
-                                        {snapshots.map((s) => (
+                                        {snapshotsForSelectedProduct.map((s) => (
                                             <option key={s.id} value={s.id}>
-                                                {s.main_product_name} — {new Date(s.created_at).toLocaleString('fr-FR')}
+                                                {s.name ? `${s.name} — ` : ''}{new Date(s.created_at).toLocaleString('fr-FR')}
                                             </option>
                                         ))}
                                     </Form.Select>
@@ -203,6 +258,7 @@ const DigitalTwins = () => {
                                     </Form.Text>
                                 </Form.Group>
                             </div>
+
                             <div className="col-md-4">
                                 <Form.Group className="mb-3">
                                     <Form.Label className="fw-medium small text-muted text-uppercase">Quantité *</Form.Label>
@@ -225,7 +281,7 @@ const DigitalTwins = () => {
                                     <Form.Label className="fw-medium small text-muted text-uppercase">Lot de production</Form.Label>
                                     <Form.Control
                                         type="text"
-                                        value={formData.snapshotion_batch}
+                                        value={formData.production_batch}
                                         onChange={(e) => setFormData({ ...formData, production_batch: e.target.value })}
                                         placeholder="Ex: BATCH-2024-001"
                                         className="shadow-none"
@@ -248,7 +304,7 @@ const DigitalTwins = () => {
                         <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <Button variant="light" onClick={() => setShowCreateModal(false)}>Fermer</Button>
                             <Button type="submit" variant="accent" className="text-white px-4" disabled={loading || !formData.snapshot}>
-                                {loading ? 'Génération...' : 'Générer les Digital Twins'}
+                                {loading ? 'Création...' : 'Créer les Digital Twins'}
                             </Button>
                         </div>
                     </Form>

@@ -96,9 +96,14 @@ const Versioning = () => {
             key: 'created_at',
             render: (val, item) => (
                 <div>
-                    <div className="fw-bold">
+                    <button
+                        type="button"
+                        className="btn btn-link p-0 text-decoration-none fw-bold text-start"
+                        onClick={() => openViewer(item)}
+                        title="Visualiser"
+                    >
                         {item.name ? item.name : <span className="text-muted">(sans nom)</span>}
-                    </div>
+                    </button>
                     <div className="small text-muted">
                         {val ? new Date(val).toLocaleString('fr-FR') : ''}
                     </div>
@@ -116,14 +121,32 @@ const Versioning = () => {
             className: 'text-end',
             render: (_id, item) => (
                 <div className="d-flex justify-content-end gap-2">
-                    <Button size="sm" variant="outline-secondary" onClick={() => openRename(item)}>
-                        Renommer
+                    <Button
+                        size="sm"
+                        variant="link"
+                        className="text-secondary text-decoration-none"
+                        onClick={() => openRename(item)}
+                        title="Renommer"
+                    >
+                        <i className="fas fa-pen"></i>
                     </Button>
-                    <Button size="sm" variant="outline-primary" onClick={() => openViewer(item)}>
-                        Visualiser
+                    <Button
+                        size="sm"
+                        variant="link"
+                        className="text-primary text-decoration-none"
+                        onClick={() => openViewer(item)}
+                        title="Visualiser"
+                    >
+                        <i className="fas fa-eye"></i>
                     </Button>
-                    <Button size="sm" variant="outline-danger" onClick={() => openDelete(item)}>
-                        Supprimer
+                    <Button
+                        size="sm"
+                        variant="link"
+                        className="text-danger text-decoration-none"
+                        onClick={() => openDelete(item)}
+                        title="Supprimer"
+                    >
+                        <i className="fas fa-trash-can"></i>
                     </Button>
                 </div>
             )

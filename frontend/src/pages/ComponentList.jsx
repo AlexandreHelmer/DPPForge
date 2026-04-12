@@ -251,6 +251,15 @@ const ComponentList = () => {
             render: (val) => val ? <code>{val}</code> : <span className="text-muted opacity-50">-</span>
         },
         {
+            header: 'Utilisations',
+            key: 'usage_count',
+            render: (val) => (
+                <span className="small text-muted">
+                    {typeof val === 'number' ? val : 0}
+                </span>
+            )
+        },
+        {
             header: 'Dernière modif.',
             key: 'updated_at',
             render: (val) => (

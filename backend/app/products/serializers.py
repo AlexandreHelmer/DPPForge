@@ -40,6 +40,7 @@ class ItemListSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.company_name', read_only=True)
     component_count = serializers.SerializerMethodField()
     snapshot_count = serializers.SerializerMethodField()
+    usage_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Item
@@ -55,6 +56,7 @@ class ItemListSerializer(serializers.ModelSerializer):
             'material_composition',
             'certifications',
             'is_archived',
+            'usage_count',
             'component_count', 'snapshot_count',
             'created_at', 'updated_at',
         ]
@@ -64,6 +66,11 @@ class ItemListSerializer(serializers.ModelSerializer):
 
     def get_snapshot_count(self, obj):
         return obj.snapshots.count()
+
+    def get_usage_count(self, obj):
+        # Number of parent items that include this item as a component.
+        # Note: includes both products and components.
+        return obj.used_in.count()
 
 
 class SnapshotSerializer(serializers.ModelSerializer):
