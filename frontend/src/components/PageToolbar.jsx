@@ -16,6 +16,7 @@ const PageToolbar = ({
     onCsvClick,
     onNewClick,
     newLabel = "Nouveau",
+    mobileLabel = "Ajouter",
     extraActions = null,
     leftContent = null,
     rightContent = null,
@@ -35,7 +36,7 @@ const PageToolbar = ({
                         >
                             <i className="fas fa-plus"></i>
                             <span className="d-none d-sm-inline">{newLabel}</span>
-                            <span className="d-inline d-sm-none">Ajouter</span>
+                            <span className="d-inline d-sm-none">{mobileLabel}</span>
                         </Button>
                     )}
 

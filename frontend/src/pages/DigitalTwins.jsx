@@ -192,6 +192,7 @@ const DigitalTwins = () => {
                 onCsvClick={() => setShowCsvModal(true)}
                 onNewClick={() => { setError(''); setSuccess(''); setShowCreateModal(true); }}
                 newLabel="Créer des Digital Twins"
+                mobileLabel="Créer"
             />
 
             {listLoading ? (

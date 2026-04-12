@@ -17,6 +17,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                     <i className="fas fa-chart-line fw-fixed"></i>
                     <span>Tableau de bord</span>
                 </Nav.Link>
+                <hr className="border-light opacity-25 my-2" />
                 <Nav.Link as={NavLink} to="/products" title="Produits">
                     <i className="fas fa-box fw-fixed"></i>
                     <span>Produits</span>
@@ -33,12 +34,12 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                         </Nav.Link>
                     </div>
                 </div>
+                <hr className="border-light opacity-25 my-2" />
                 <Nav.Link as={NavLink} to="/versioning" title="Versioning">
                     <i className="fas fa-code-branch fw-fixed"></i>
                     <span>Versioning</span>
                 </Nav.Link>
 
-                <hr className="border-light opacity-25 my-2" />
 
                 <Nav.Link as={NavLink} to="/qr-generator" title="Digital Twins">
                     <i className="fas fa-qrcode fw-fixed"></i>

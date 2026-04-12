@@ -4,6 +4,7 @@ import { productsService } from '../services/products';
 import ListTable from '../components/ListTable';
 import CsvModal from '../components/CsvModal';
 import PageToolbar from '../components/PageToolbar';
+import { copyToClipboard } from '../utils/clipboard';
 
 const SupplierLinks = () => {
     const [links, setLinks] = useState([]);
@@ -59,7 +60,7 @@ const SupplierLinks = () => {
 
             // Auto-copy to clipboard
             if (result.link_url) {
-                navigator.clipboard?.writeText(result.link_url);
+                copyToClipboard(result.link_url);
             }
         } catch (err) {
             const msg = err.response?.data?.error || err.response?.data?.[0] || 'Erreur lors de la création du lien.';
@@ -80,11 +81,13 @@ const SupplierLinks = () => {
         }
     };
 
-    const handleCopy = (url, id) => {
-        navigator.clipboard?.writeText(url);
-        setCopiedId(id);
-        setSuccess(`Lien copié dans le presse-papier : ${url}`);
-        setTimeout(() => setCopiedId(null), 2000);
+    const handleCopy = async (url, id) => {
+        const success = await copyToClipboard(url);
+        if (success) {
+            setCopiedId(id);
+            setSuccess(`Lien copié dans le presse-papier : ${url}`);
+            setTimeout(() => setCopiedId(null), 2000);
+        }
     };
 
 
@@ -196,8 +199,8 @@ const SupplierLinks = () => {
 
     const filteredLinks = links.filter(link => {
         const search = searchTerm.toLowerCase();
-        return link.component_name.toLowerCase().includes(search) || 
-               (link.supplier_email && link.supplier_email.toLowerCase().includes(search));
+        return link.component_name.toLowerCase().includes(search) ||
+            (link.supplier_email && link.supplier_email.toLowerCase().includes(search));
     });
 
     return (
@@ -222,6 +225,7 @@ const SupplierLinks = () => {
                 onCsvClick={() => setShowCsvModal(true)}
                 onNewClick={() => { resetForm(); setShowModal(true); }}
                 newLabel="Créer un lien fournisseur"
+                mobileLabel="Créer"
             />
 
             {listLoading ? (

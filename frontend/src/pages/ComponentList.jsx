@@ -5,6 +5,7 @@ import ListTable from '../components/ListTable';
 import ComponentForm from '../components/ComponentForm';
 import CsvModal from '../components/CsvModal';
 import PageToolbar from '../components/PageToolbar';
+import { copyToClipboard } from '../utils/clipboard';
 
 const ComponentList = () => {
     const [components, setComponents] = useState([]);
@@ -188,7 +189,7 @@ const ComponentList = () => {
                 ...supplierForm,
             });
             setSupplierSuccess(result.link_url);
-            navigator.clipboard?.writeText(result.link_url);
+            copyToClipboard(result.link_url);
             loadComponents();
         } catch (err) {
             const msg = err.response?.data?.error || err.response?.data?.[0] || 'Erreur lors de la création du lien.';
@@ -434,7 +435,7 @@ const ComponentList = () => {
                                     <Button
                                         variant="outline-primary"
                                         size="sm"
-                                        onClick={() => navigator.clipboard?.writeText(supplierSuccess)}
+                                        onClick={() => copyToClipboard(supplierSuccess)}
                                     >
                                         <i className="fas fa-copy"></i>
                                     </Button>
