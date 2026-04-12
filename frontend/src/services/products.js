@@ -1,99 +1,89 @@
 import api from './api';
 
 export const productsService = {
-    // Components
+    // Components (Items with is_main_product=false)
     async getComponents() {
-        const response = await api.get('/api/components/');
+        const response = await api.get('/api/items/', { params: { is_main_product: false } });
         return response.data;
     },
 
     async getComponent(id) {
-        const response = await api.get(`/api/components/${id}/`);
+        const response = await api.get(`/api/items/${id}/`);
         return response.data;
     },
 
     async createComponent(data) {
-        const response = await api.post('/api/components/', data);
+        const response = await api.post('/api/items/', { ...data, is_main_product: false });
         return response.data;
     },
 
     async updateComponent(id, data) {
-        const response = await api.put(`/api/components/${id}/`, data);
+        const response = await api.put(`/api/items/${id}/`, data);
         return response.data;
     },
 
     async deleteComponent(id) {
-        await api.delete(`/api/components/${id}/`);
+        await api.delete(`/api/items/${id}/`);
     },
 
     async archiveComponent(id) {
-        const response = await api.post(`/api/components/${id}/archive/`);
+        const response = await api.post(`/api/items/${id}/archive/`);
         return response.data;
     },
 
     async unarchiveComponent(id) {
-        const response = await api.post(`/api/components/${id}/unarchive/`);
+        const response = await api.post(`/api/items/${id}/unarchive/`);
         return response.data;
     },
 
-    // Products
+    // Products (Items with is_main_product=true)
     async getProducts() {
-        const response = await api.get('/api/products/');
+        const response = await api.get('/api/items/', { params: { is_main_product: true } });
         return response.data;
     },
 
     async getProduct(id) {
-        const response = await api.get(`/api/products/${id}/`);
+        const response = await api.get(`/api/items/${id}/`);
         return response.data;
     },
 
     async createProduct(data) {
-        const response = await api.post('/api/products/', data);
+        const response = await api.post('/api/items/', { ...data, is_main_product: true });
         return response.data;
     },
 
     async updateProduct(id, data) {
-        const response = await api.put(`/api/products/${id}/`, data);
+        const response = await api.put(`/api/items/${id}/`, data);
         return response.data;
     },
 
     async deleteProduct(id) {
-        await api.delete(`/api/products/${id}/`);
+        await api.delete(`/api/items/${id}/`);
     },
 
-    async generateJsonLd(id) {
-        const response = await api.post(`/api/products/${id}/generate_json_ld/`);
+    async createSnapshot(data) {
+        const response = await api.post('/api/snapshots/', data);
         return response.data;
     },
 
-    async lockProduct(id) {
-        const response = await api.post(`/api/products/${id}/lock/`);
-        return response.data;
-    },
-
-    async archiveProduct(id) {
-        const response = await api.post(`/api/products/${id}/archive/`);
-        return response.data;
-    },
-
-    async unarchiveProduct(id) {
-        const response = await api.post(`/api/products/${id}/unarchive/`);
+    async getSnapshots() {
+        const response = await api.get('/api/snapshots/');
         return response.data;
     },
 
     // Digital Twins
     async getDigitalTwins() {
-        const response = await api.get('/api/product-instances/');
+        const response = await api.get('/api/twins/');
         return response.data;
     },
 
     async batchCreateDigitalTwins(data) {
-        const response = await api.post('/api/product-instances/batch_create/', data);
+        const response = await api.post('/api/twins/batch_create/', data);
         return response.data;
     },
 
     async regenerateQR(id) {
-        const response = await api.post(`/api/product-instances/${id}/regenerate_qr/`);
+        const response = await api.post(`/api/twins/${id}/regenerate_qr/`);
         return response.data;
     },
 

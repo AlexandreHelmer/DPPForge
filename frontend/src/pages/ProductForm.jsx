@@ -35,7 +35,7 @@ const ProductForm = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [status, setStatus] = useState('DRAFT');
+    const [status, setStatus] = useState('CURRENT');
     const [isArchived, setIsArchived] = useState(false);
     const [showLockModal, setShowLockModal] = useState(false);
     const [showComponentModal, setShowComponentModal] = useState(false);
@@ -56,10 +56,14 @@ const ProductForm = () => {
 
     useEffect(() => {
         loadComponents();
-        if (isEdit) {
+    }, [id]);
+
+    // Load the product only once components are available, so selectedComponents can resolve.
+    useEffect(() => {
+        if (isEdit && availableComponents.length > 0) {
             loadProduct();
         }
-    }, [id]);
+    }, [id, isEdit, availableComponents.length]);
 
     const loadComponents = async () => {
         try {
@@ -85,8 +89,11 @@ const ProductForm = () => {
                 certifications: data.certifications || [],
                 components: data.components || [],
             });
-            setSelectedComponents(data.components_detail || []);
-            setStatus(data.status);
+            // New API returns only component IDs; use availableComponents cache to display chips.
+            setSelectedComponents(
+                (data.components || []).map((cid) => availableComponents.find((c) => c.id === cid)).filter(Boolean)
+            );
+            setStatus('CURRENT');
             setIsArchived(data.is_archived);
         } catch (err) {
             setError('Erreur lors du chargement du produit');
@@ -107,16 +114,16 @@ const ProductForm = () => {
                 savedProduct = await productsService.createProduct(formData);
             }
 
+            // New workflow: create a Snapshot (version) instead of locking.
             if (shouldLock) {
                 try {
-                    await productsService.lockProduct(savedProduct.id || id);
-                    setSuccess('Produit verrouillé avec succès !');
-                    setStatus('LOCKED');
+                    await productsService.createSnapshot({ main_product: savedProduct.id || id });
+                    setSuccess('Version (Snapshot) créée avec succès.');
                     setShowLockModal(false);
                     if (!isEdit) navigate(`/products/edit/${savedProduct.id}`);
-                } catch (lockErr) {
-                    setError('Le produit a été sauvegardé mais ne peut pas être verrouillé : ' +
-                        (lockErr.response?.data?.error || 'Informations manquantes pour la conformité EU (Catégorie, Marque, GTIN).'));
+                } catch (snapErr) {
+                    setError('Le produit a été sauvegardé mais la version n\'a pas pu être créée : ' +
+                        (snapErr.response?.data?.detail || snapErr.response?.data?.error || 'Erreur inconnue'));
                     setShowLockModal(false);
                 }
             } else {
@@ -216,7 +223,7 @@ const ProductForm = () => {
     };
 
     const openEditComponentModal = (comp) => {
-        const isCompReadOnly = !!(comp?.supplier_locked || comp?.is_brand_locked);
+        const isCompReadOnly = false;
         setComponentModalMode('edit');
         setEditingComponentId(comp.id);
         setComponentReadOnly(isCompReadOnly);
@@ -515,7 +522,7 @@ const ProductForm = () => {
                                                 }
                                             }}
                                             style={{ cursor: 'pointer' }}
-                                            title={comp.supplier_locked || comp.is_brand_locked ? 'Composant verrouillé (lecture seule)' : 'Modifier le composant'}
+                                            title={'Modifier le composant'}
                                         >
                                             {comp.name}
                                             <span className="ms-1 opacity-75">

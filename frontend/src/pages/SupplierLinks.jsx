@@ -119,8 +119,8 @@ const SupplierLinks = () => {
         );
     };
 
-    // Only show components not yet locked (neither by supplier nor by brand)
-    const availableComponents = components.filter(c => !c.supplier_locked && !c.is_brand_locked);
+    // Only show components (items with is_main_product=false)
+    const availableComponents = components;
 
     const columns = [
         {

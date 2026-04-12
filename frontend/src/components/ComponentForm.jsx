@@ -93,16 +93,31 @@ const ComponentForm = ({
             <Row>
                 <Col md={6}>
                     <Form.Group className="mb-4">
-                        <Form.Label className="fw-medium">Fabricant / Fournisseur</Form.Label>
+                        <Form.Label className="fw-medium">Fabricant</Form.Label>
                         <Form.Control
                             type="text"
                             value={formData.manufacturer}
                             onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
-                            placeholder="Nom de l'entité"
+                            placeholder="Nom du fabricant"
                             readOnly={readOnly}
                         />
                     </Form.Group>
                 </Col>
+                <Col md={6}>
+                    <Form.Group className="mb-4">
+                        <Form.Label className="fw-medium">Fournisseur</Form.Label>
+                        <Form.Control
+                            type="text"
+                            value={formData.supplier || ''}
+                            onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                            placeholder="Nom du fournisseur (optionnel)"
+                            readOnly={readOnly}
+                        />
+                    </Form.Group>
+                </Col>
+            </Row>
+
+            <Row>
                 <Col md={6}>
                     <Form.Group className="mb-4">
                         <Form.Label className="fw-medium">Pays d'origine</Form.Label>
@@ -111,6 +126,18 @@ const ComponentForm = ({
                             value={formData.origin_country}
                             onChange={(e) => setFormData({ ...formData, origin_country: e.target.value })}
                             placeholder="Ex: France"
+                            readOnly={readOnly}
+                        />
+                    </Form.Group>
+                </Col>
+                <Col md={6}>
+                    <Form.Group className="mb-4">
+                        <Form.Label className="fw-medium">Marque</Form.Label>
+                        <Form.Control
+                            type="text"
+                            value={formData.brand || ''}
+                            onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                            placeholder="Optionnel"
                             readOnly={readOnly}
                         />
                     </Form.Group>

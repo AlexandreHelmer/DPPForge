@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
-from products.models import Product, Component, ProductInstance
+from products.models import Item, DigitalTwin
 
 
 @api_view(['GET'])
@@ -21,45 +21,29 @@ def dashboard_stats(request):
     user = request.user
     
     # Basic counts
-    total_products = Product.objects.filter(company=user).count()
-    total_components = Component.objects.filter(company=user).count()
-    total_instances = ProductInstance.objects.filter(product__company=user).count()
-    
-    # Products by status
-    products_by_status = Product.objects.filter(company=user).values('status').annotate(
-        count=Count('id')
-    )
-    status_dict = {item['status']: item['count'] for item in products_by_status}
+    total_products = Item.objects.filter(company=user, is_main_product=True).count()
+    total_components = Item.objects.filter(company=user, is_main_product=False).count()
+    total_instances = DigitalTwin.objects.filter(company=user).count()
     
     # QR codes generated
     today = timezone.now().date()
     month_start = today.replace(day=1)
     
-    qr_today = ProductInstance.objects.filter(
-        product__company=user,
-        created_at__date=today
-    ).count()
+    qr_today = DigitalTwin.objects.filter(company=user, created_at__date=today).count()
     
-    qr_this_month = ProductInstance.objects.filter(
-        product__company=user,
-        created_at__date__gte=month_start
-    ).count()
+    qr_this_month = DigitalTwin.objects.filter(company=user, created_at__date__gte=month_start).count()
     
     # Recent products
-    recent_products = Product.objects.filter(company=user).order_by('-created_at')[:5]
+    recent_products = Item.objects.filter(company=user, is_main_product=True).order_by('-created_at')[:5]
     recent_products_data = [{
         'id': str(p.id),
         'name': p.name,
         'gtin': p.gtin,
-        'status': p.status,
         'created_at': p.created_at
     } for p in recent_products]
     
-    # Complete vs incomplete
-    complete_count = Product.objects.filter(
-        company=user,
-        status__in=['COMPLETE', 'LOCKED']
-    ).count()
+    # Complete vs incomplete: with snapshots, "complete" is approximated as "has at least 1 snapshot"
+    complete_count = Item.objects.filter(company=user, is_main_product=True, snapshots__isnull=False).distinct().count()
     incomplete_count = total_products - complete_count
     
     return Response({
@@ -71,9 +55,9 @@ def dashboard_stats(request):
             'incomplete_products': incomplete_count,
         },
         'products_by_status': {
-            'draft': status_dict.get('DRAFT', 0),
-            'complete': status_dict.get('COMPLETE', 0),
-            'locked': status_dict.get('LOCKED', 0),
+            'draft': 0,
+            'complete': 0,
+            'locked': 0,
         },
         'qr_codes': {
             'today': qr_today,

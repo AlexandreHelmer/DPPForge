@@ -1,8 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    ComponentViewSet, ProductViewSet,
-    ProductInstanceViewSet, PublicProductInstanceViewSet,
+    ItemViewSet, SnapshotViewSet,
+    DigitalTwinViewSet, PublicDigitalTwinViewSet,
     SupplierLinkViewSet,
     PublicSupplierLinkView, PublicSupplierVerifyPasswordView, PublicSupplierSubmitView
 )
@@ -15,10 +15,10 @@ from .export_views import (
 )
 
 router = DefaultRouter()
-router.register(r'components', ComponentViewSet, basename='component')
-router.register(r'products', ProductViewSet, basename='product')
-router.register(r'product-instances', ProductInstanceViewSet, basename='productinstance')
-router.register(r'public/twins', PublicProductInstanceViewSet, basename='public-twin')
+router.register(r'items', ItemViewSet, basename='item')
+router.register(r'snapshots', SnapshotViewSet, basename='snapshot')
+router.register(r'twins', DigitalTwinViewSet, basename='twin')
+router.register(r'public/twins', PublicDigitalTwinViewSet, basename='public-twin')
 router.register(r'supplier-links', SupplierLinkViewSet, basename='supplierlink')
 
 urlpatterns = [

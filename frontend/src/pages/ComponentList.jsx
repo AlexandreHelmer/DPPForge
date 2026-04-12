@@ -17,6 +17,11 @@ const ComponentList = () => {
         name: '',
         description: '',
         manufacturer: '',
+        supplier: '',
+        brand: '',
+        category: '',
+        model_number: '',
+        components: [],
         material_composition: {},
         certifications: [],
         origin_country: '',
@@ -27,6 +32,11 @@ const ComponentList = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [listLoading, setListLoading] = useState(true);
+
+    const loadComponent = async (id) => {
+        const data = await productsService.getComponent(id);
+        return data;
+    };
 
     // Supplier link modal
     const [showSupplierModal, setShowSupplierModal] = useState(false);
@@ -79,19 +89,34 @@ const ComponentList = () => {
         }
     };
 
-    const handleEdit = (comp) => {
+    const handleEdit = async (comp) => {
         setEditingId(comp.id);
-        setFormData({
-            name: comp.name || '',
-            description: comp.description || '',
-            manufacturer: comp.manufacturer || '',
-            material_composition: comp.material_composition || {},
-            certifications: comp.certifications || [],
-            origin_country: comp.origin_country || '',
-            gtin: comp.gtin || '',
-        });
+        setLoading(true);
         setError('');
-        setShowModal(true);
+        try {
+            // Fetch full component details (list endpoint may not include all fields)
+            const full = await loadComponent(comp.id);
+            setFormData({
+                name: full.name || '',
+                description: full.description || '',
+                manufacturer: full.manufacturer || '',
+                supplier: full.supplier || '',
+                brand: full.brand || '',
+                category: full.category || '',
+                model_number: full.model_number || '',
+                components: full.components || [],
+                material_composition: full.material_composition || {},
+                certifications: full.certifications || [],
+                origin_country: full.origin_country || '',
+                gtin: full.gtin || '',
+            });
+            setShowModal(true);
+        } catch (err) {
+            const msg = err.response?.data?.detail || 'Erreur lors du chargement du composant.';
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDelete = async (id) => {
@@ -128,6 +153,11 @@ const ComponentList = () => {
             name: '',
             description: '',
             manufacturer: '',
+            supplier: '',
+            brand: '',
+            category: '',
+            model_number: '',
+            components: [],
             material_composition: {},
             certifications: [],
             origin_country: '',
@@ -183,19 +213,9 @@ const ComponentList = () => {
                         >
                             {val}
                         </button>
-                        {item.supplier_validated && (
+                        {item.supplier_submitted && (
                             <Badge bg="success" className="d-inline-flex align-items-center gap-1" style={{ fontSize: '0.7rem' }}>
-                                <i className="fas fa-check-circle"></i> Validé fournisseur
-                            </Badge>
-                        )}
-                        {item.is_brand_locked && (
-                            <Badge bg="info" className="d-inline-flex align-items-center gap-1" style={{ fontSize: '0.7rem' }}>
-                                <i className="fas fa-shield-halved"></i> Validé par la marque
-                            </Badge>
-                        )}
-                        {(item.supplier_locked || item.is_brand_locked) && (
-                            <Badge bg="secondary" style={{ fontSize: '0.65rem' }}>
-                                <i className="fas fa-lock"></i>
+                                <i className="fas fa-check-circle"></i> Soumis fournisseur
                             </Badge>
                         )}
                         {item.is_archived && (
@@ -216,24 +236,9 @@ const ComponentList = () => {
             render: (val) => val || <span className="text-muted opacity-50">-</span>
         },
         {
-            header: 'Utilisé dans',
-            key: 'used_in_products',
-            render: (val) => (
-                val && val.length > 0 ? (
-                    <div className="d-flex flex-wrap gap-1">
-                        {val.map((product) => (
-                            <Badge
-                                key={product.id}
-                                bg={product.is_archived ? 'secondary' : 'light'}
-                                className={product.is_archived ? '' : 'text-dark border'}
-                                style={{ fontSize: '0.65rem' }}
-                            >
-                                {product.name}
-                            </Badge>
-                        ))}
-                    </div>
-                ) : <span className="text-muted opacity-75">Aucun produit</span>
-            )
+            header: 'Fournisseur',
+            key: 'supplier',
+            render: (val) => val || <span className="text-muted opacity-50">-</span>
         },
         {
             header: 'Origine',
@@ -264,7 +269,6 @@ const ComponentList = () => {
             key: 'id',
             className: 'text-end px-4',
             render: (id, item) => {
-                const isLocked = item.supplier_locked || item.is_brand_locked;
                 return (
                     <div className="d-flex justify-content-end gap-1">
                         <Button
@@ -277,28 +281,18 @@ const ComponentList = () => {
                             <i className={`fas ${item.is_archived ? 'fa-box-open' : 'fa-box-archive'}`}></i>
                         </Button>
 
-                        {!isLocked && (
-                            <>
-                                <Button
-                                    size="sm"
-                                    variant="link"
-                                    className="text-warning text-decoration-none"
-                                    onClick={() => openSupplierModal(item)}
-                                    title="Demander les infos au fournisseur"
-                                >
-                                    <i className="fas fa-link"></i>
-                                </Button>
-                                <Button size="sm" variant="link" className="text-danger text-decoration-none" onClick={() => handleDelete(id)} title="Supprimer">
-                                    <i className="fas fa-trash-can"></i>
-                                </Button>
-                            </>
-                        )}
-
-                        {isLocked && (
-                            <span className="text-muted d-flex align-items-center ms-2" title="Ce composant est verrouillé">
-                                <i className="fas fa-lock small"></i>
-                            </span>
-                        )}
+                        <Button
+                            size="sm"
+                            variant="link"
+                            className="text-warning text-decoration-none"
+                            onClick={() => openSupplierModal(item)}
+                            title="Demander les infos au fournisseur"
+                        >
+                            <i className="fas fa-link"></i>
+                        </Button>
+                        <Button size="sm" variant="link" className="text-danger text-decoration-none" onClick={() => handleDelete(id)} title="Supprimer">
+                            <i className="fas fa-trash-can"></i>
+                        </Button>
                     </div>
                 );
             }
@@ -315,8 +309,7 @@ const ComponentList = () => {
                (c.gtin && c.gtin.toLowerCase().includes(search));
     });
 
-    const editingComponent = components.find(c => c.id === editingId);
-    const isReadOnlyModal = !!editingComponent && (editingComponent.supplier_locked || editingComponent.is_brand_locked);
+    const isReadOnlyModal = false;
 
     return (
         <div className="animate-fade-in pb-5">
@@ -375,11 +368,7 @@ const ComponentList = () => {
             <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
                 <Modal.Header closeButton className="border-0 pb-0">
                     <Modal.Title className="fw-bold">
-                        {editingId ? (
-                            (components.find(c => c.id === editingId)?.supplier_locked ||
-                                components.find(c => c.id === editingId)?.is_brand_locked)
-                                ? 'Consulter l\'élément' : 'Modifier l\'élément'
-                        ) : 'Nouveau Matériau / Pièce'}
+                        {editingId ? 'Modifier l\'élément' : 'Nouveau Matériau / Pièce'}
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body className="pt-4">

@@ -58,14 +58,9 @@ const ProductList = () => {
         }
     };
 
-    const getStatusBadge = (status) => {
-        const badges = {
-            DRAFT: { bg: 'secondary', text: 'Brouillon' },
-            COMPLETE: { bg: 'success', text: 'Complet' },
-            LOCKED: { bg: 'info', text: 'Verrouillé' },
-        };
-        const badge = badges[status] || badges.DRAFT;
-        return <Badge bg={badge.bg}>{badge.text}</Badge>;
+    const getStatusBadge = () => {
+        // New workflow uses Snapshots for versions; current items are always editable.
+        return <Badge bg="secondary">Courant</Badge>;
     };
 
     const columns = [
@@ -96,14 +91,14 @@ const ProductList = () => {
             render: (val) => <Badge bg="light" className="text-dark border">{val || 0}</Badge>
         },
         {
-            header: 'Digital Twins',
-            key: 'instance_count',
+            header: 'Versions',
+            key: 'snapshot_count',
             render: (val) => <Badge bg="light" className="text-primary border">{val || 0}</Badge>
         },
         {
             header: 'Statut',
             key: 'status',
-            render: (val) => getStatusBadge(val)
+            render: () => getStatusBadge()
         },
         {
             header: 'Dernière modif.',
@@ -126,18 +121,16 @@ const ProductList = () => {
             className: 'text-end px-4',
             render: (id, item) => (
                 <div className="d-flex justify-content-end gap-1">
-                    {item.status !== 'LOCKED' && (
-                        <Button
-                            size="sm"
-                            variant="link"
-                            className="text-danger text-decoration-none"
-                            onClick={() => handleDelete(id)}
-                            aria-label="Supprimer le produit"
-                            title="Supprimer"
-                        >
-                            <i className="fas fa-trash-can"></i>
-                        </Button>
-                    )}
+                    <Button
+                        size="sm"
+                        variant="link"
+                        className="text-danger text-decoration-none"
+                        onClick={() => handleDelete(id)}
+                        aria-label="Supprimer le produit"
+                        title="Supprimer"
+                    >
+                        <i className="fas fa-trash-can"></i>
+                    </Button>
 
                     <Button
                         size="sm"

@@ -4,9 +4,17 @@ import uuid
 import json
 
 
-class Component(models.Model):
-    """
-    Represents a component that can be part of a product.
+class Item(models.Model):
+    """\
+    Current (editable) object.
+
+    In the new schema: product == component.
+    We keep a single table for both, with:
+    - is_main_product: whether this item is meant to be a "main" product in the UI
+    - supplier (nullable): optional supplier information
+    - supplier_submitted: boolean flag set when a supplier submitted data (instead of locking)
+
+    Composition is expressed via a self-referential M2M (components).
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     company = models.ForeignKey(
@@ -16,9 +24,28 @@ class Component(models.Model):
         verbose_name='Entreprise'
     )
     
-    name = models.CharField(max_length=255, verbose_name='Nom du composant')
+    name = models.CharField(max_length=255, verbose_name="Nom")
     description = models.TextField(blank=True, verbose_name='Description')
     manufacturer = models.CharField(max_length=255, blank=True, verbose_name='Fabricant')
+
+    # Product-only fields (kept optional so the same table can represent components)
+    brand = models.CharField(max_length=100, blank=True, verbose_name='Marque')
+    category = models.CharField(max_length=100, blank=True, verbose_name='Catégorie')
+    model_number = models.CharField(max_length=100, blank=True, verbose_name='Numéro de modèle')
+
+    # Whether this item is presented as a "main product" in the UI
+    is_main_product = models.BooleanField(
+        default=False,
+        verbose_name='Produit principal'
+    )
+
+    # Supplier is optional / unknown in many cases
+    supplier = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name='Fournisseur'
+    )
     
     # Material composition as JSON
     material_composition = models.JSONField(
@@ -44,254 +71,175 @@ class Component(models.Model):
         verbose_name='GTIN',
         help_text='Global Trade Item Number'
     )
+
+    def save(self, *args, **kwargs):
+        # Normalize empties
+        if self.supplier == "":
+            self.supplier = None
+        if self.gtin == "":
+            self.gtin = None
+        super().save(*args, **kwargs)
     
-    # Supplier validation
-    supplier_validated = models.BooleanField(
+    # Supplier workflow: submitted vs locked
+    supplier_submitted = models.BooleanField(
         default=False,
-        verbose_name='Validé par le fournisseur'
-    )
-    supplier_locked = models.BooleanField(
-        default=False,
-        verbose_name='Verrouillé (fournisseur)'
+        verbose_name='Soumis par le fournisseur'
     )
     is_archived = models.BooleanField(default=False, verbose_name='Archivé')
+
+    components = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        related_name='used_in',
+        blank=True,
+        verbose_name='Composants'
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = 'Composant'
-        verbose_name_plural = 'Composants'
+        verbose_name = 'Item'
+        verbose_name_plural = 'Items'
         ordering = ['-created_at']
     
     def __str__(self):
         return f"{self.name} ({self.company.company_name})"
 
 
-class Product(models.Model):
+class Snapshot(models.Model):
+    """\
+    Immutable deep copy (JSON) of a main product at a point in time.
+
+    A snapshot includes the product data *and* its components recursively,
+    serialized into a single JSON payload.
     """
-    Represents a product composed of components.
-    Generates EU-compliant JSON-LD Digital Product Passport.
-    """
-    STATUS_CHOICES = [
-        ('DRAFT', 'Brouillon'),
-        ('COMPLETE', 'Complet'),
-        ('LOCKED', 'Verrouillé'),
-    ]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     company = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='products',
+        related_name='snapshots',
         verbose_name='Entreprise'
     )
-    
-    name = models.CharField(max_length=255, verbose_name='Nom du produit')
-    description = models.TextField(blank=True, verbose_name='Description')
-    
-    gtin = models.CharField(
-        max_length=14,
-        unique=True,
-        null=True,
-        blank=True,
-        verbose_name='GTIN',
-        help_text='Global Trade Item Number - unique identifier'
-    )
-    
-    components = models.ManyToManyField(
-        Component,
-        related_name='products',
-        blank=True,
-        verbose_name='Composants'
-    )
-    
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='DRAFT',
-        verbose_name='Statut'
-    )
-    
-    # EU DPP specific fields
-    category = models.CharField(max_length=100, blank=True, verbose_name='Catégorie')
-    brand = models.CharField(max_length=100, blank=True, verbose_name='Marque')
-    model_number = models.CharField(max_length=100, blank=True, verbose_name='Numéro de modèle')
-    material_composition = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name='Composition matérielle',
-        help_text='Ex: {"steel": 70, "plastic": 30}'
-    )
-    certifications = models.JSONField(
-        default=list,
-        blank=True,
-        verbose_name='Certifications',
-        help_text='Ex: ["CE", "RoHS", "REACH"]'
-    )
-    
-    # Store the generated JSON-LD
-    json_ld = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name='JSON-LD DPP',
-        help_text='Digital Product Passport au format JSON-LD'
-    )
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    is_archived = models.BooleanField(default=False, verbose_name='Archivé')
-    
-    class Meta:
-        verbose_name = 'Produit'
-        verbose_name_plural = 'Produits'
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.name} - {self.gtin or 'SANS GTIN'}"
-    
-    def is_complete(self):
-        """
-        Check if product has minimum required information for EU DPP validation.
-        """
-        # Minimum fields required to move from DRAFT to COMPLETE/LOCKED
-        # Note: GTIN is technically mandatory for EU DPP
-        required_fields = [
-            self.name,
-            self.gtin,
-            self.category,
-            self.brand,
-        ]
-        return all(required_fields) and self.components.exists()
-    
-    def generate_json_ld(self):
-        """
-        Generate EU-compliant JSON-LD Digital Product Passport.
-        Based on EU DPP Regulation (EU) 2023/1542.
-        """
-        components_data = []
-        for component in self.components.all():
-            components_data.append({
-                "@type": "Product",
-                "name": component.name,
-                "description": component.description,
-                "manufacturer": {
-                    "@type": "Organization",
-                    "name": component.manufacturer
-                },
-                "material": component.material_composition,
-                "countryOfOrigin": component.origin_country,
-                "gtin": component.gtin,
-                "certifications": component.certifications
-            })
-        
-        json_ld_data = {
-            "@context": "https://schema.org",
-            "@type": "Product",
-            "@id": f"urn:dpp:{self.gtin}",
-            "gtin": self.gtin,
-            "name": self.name,
-            "description": self.description,
-            "brand": {
-                "@type": "Brand",
-                "name": self.brand
-            },
-            "manufacturer": {
-                "@type": "Organization",
-                "name": self.company.company_name,
-                "identifier": self.company.company_registration
-            },
-            "category": self.category,
-            "model": self.model_number,
-            "material": self.material_composition,
-            "certifications": self.certifications,
-            "hasPart": components_data,
-            "additionalProperty": [
-                {
-                    "@type": "PropertyValue",
-                    "name": "Digital Product Passport",
-                    "value": "EU Compliant",
-                    "description": "Conforme au règlement UE 2023/1542"
-                }
-            ]
-        }
-        
-        self.json_ld = json_ld_data
-        return json_ld_data
-    
-    def save(self, *args, **kwargs):
-        if self.gtin == "":
-            self.gtin = None
-            
-        # Auto-update status if it was draft and now it's complete
-        if self.status == 'DRAFT' and self.is_complete():
-            self.status = 'COMPLETE'
-            
-        # Generate JSON-LD if status is COMPLETE or LOCKED
-        if self.status in ['COMPLETE', 'LOCKED']:
-            self.generate_json_ld()
-            
-        super().save(*args, **kwargs)
 
-
-class ProductInstance(models.Model):
-    """
-    Represents a specific instance of a product (digital twin).
-    Each instance has a unique serial number and QR code.
-    """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(
-        Product,
+    main_product = models.ForeignKey(
+        Item,
         on_delete=models.CASCADE,
-        related_name='instances',
-        verbose_name='Produit'
+        related_name='snapshots',
+        verbose_name='Produit principal'
     )
-    
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Date de snapshot')
+
+    # Deep-copied payload (like a DPP template, without manufacturing date & serial)
+    payload = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='Payload (JSON)'
+    )
+
+    class Meta:
+        verbose_name = 'Snapshot'
+        verbose_name_plural = 'Snapshots'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Snapshot {self.main_product.name} @ {self.created_at:%Y-%m-%d %H:%M}"
+
+
+def _serialize_item_tree(item: 'Item', visited=None):
+    """Serialize an item and its components into a JSON-friendly dict."""
+    if visited is None:
+        visited = set()
+    if item.id in visited:
+        # Prevent cycles
+        return {"id": str(item.id), "name": item.name, "cycle": True}
+    visited.add(item.id)
+
+    return {
+        "id": str(item.id),
+        "name": item.name,
+        "description": item.description,
+        "manufacturer": item.manufacturer,
+        "supplier": item.supplier,
+        "supplier_submitted": item.supplier_submitted,
+        "origin_country": item.origin_country,
+        "gtin": item.gtin,
+        "category": getattr(item, 'category', ''),
+        "brand": getattr(item, 'brand', ''),
+        "model_number": getattr(item, 'model_number', ''),
+        "material_composition": item.material_composition,
+        "certifications": item.certifications,
+        "components": [
+            _serialize_item_tree(child, visited=visited) for child in item.components.all()
+        ],
+    }
+
+
+class DigitalTwin(models.Model):
+    """\
+    Represents a specific instance of a product (digital twin).
+    The QR code and UUID are specific to the twin, and each twin is generated
+    from a Snapshot.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    company = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='twins',
+        verbose_name='Entreprise'
+    )
+
+    snapshot = models.ForeignKey(
+        Snapshot,
+        on_delete=models.CASCADE,
+        related_name='twins',
+        verbose_name='Snapshot'
+    )
+
     serial_number = models.CharField(
         max_length=100,
         unique=True,
         verbose_name='Numéro de série'
     )
-    
+
     manufacturing_date = models.DateField(null=True, blank=True, verbose_name='Date de fabrication réelle')
-    
+
     qr_code = models.ImageField(
         upload_to='qr_codes/',
         blank=True,
         null=True,
         verbose_name='QR Code'
     )
-    
+
     # Additional tracking
     production_batch = models.CharField(max_length=100, blank=True, verbose_name='Lot de production')
     notes = models.TextField(blank=True, verbose_name='Notes')
-    
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Date de création')
-    
+
     class Meta:
-        verbose_name = 'Instance de Produit'
-        verbose_name_plural = 'Instances de Produit'
+        verbose_name = 'Digital Twin'
+        verbose_name_plural = 'Digital Twins'
         ordering = ['-created_at']
-    
+
     def __str__(self):
-        return f"{self.product.name} - {self.serial_number}"
-    
+        return f"{self.snapshot.main_product.name} - {self.serial_number}"
+
     def get_public_url(self):
-        """
-        Generate the public URL for viewing this product instance.
-        """
+        """Public URL used by the QR code."""
         from django.conf import settings
-        # Will be accessible at /public/twin/<uuid>/
         return f"{settings.FRONTEND_URL}/twin/{self.id}"
-    
+
     def generate_qr_code(self):
-        """
-        Generate QR code pointing to the public URL.
-        """
+        """Generate a QR code pointing to the public URL."""
         import qrcode
         from io import BytesIO
         from django.core.files import File
-        
+
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -300,17 +248,18 @@ class ProductInstance(models.Model):
         )
         qr.add_data(self.get_public_url())
         qr.make(fit=True)
-        
+
         img = qr.make_image(fill_color="black", back_color="white")
-        
         buffer = BytesIO()
         img.save(buffer, format='PNG')
         buffer.seek(0)
-        
+
         filename = f'qr_{self.serial_number}.png'
         self.qr_code.save(filename, File(buffer), save=False)
-        
         return self.qr_code
+
+
+ 
 
 
 class SupplierLink(models.Model):
@@ -327,7 +276,7 @@ class SupplierLink(models.Model):
     )
     
     component = models.ForeignKey(
-        Component,
+        Item,
         on_delete=models.CASCADE,
         related_name='supplier_links',
         verbose_name='Composant'

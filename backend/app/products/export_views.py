@@ -15,7 +15,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Component, Product, ProductInstance, SupplierLink
+from .models import Item, Snapshot, DigitalTwin, SupplierLink
 
 
 # ---------------------------------------------------------------------------
@@ -124,18 +124,20 @@ def _component_rows(qs):
 def _product_rows(qs):
     for p in qs:
         yield [
-            p.name, p.description, p.gtin, p.category, p.brand,
-            p.model_number,
+            p.name, p.description, p.gtin, '', '',
+            '',
             _json_col(p.material_composition),
             _json_col(p.certifications),
-            p.status,
+            'CURRENT',
         ]
 
 
 def _twin_rows(qs):
     for t in qs:
         yield [
-            t.product.name, t.product.gtin, t.serial_number,
+            t.snapshot.main_product.name,
+            t.snapshot.main_product.gtin,
+            t.serial_number,
             t.manufacturing_date or '', t.production_batch, t.notes,
             t.created_at.isoformat(),
         ]
@@ -182,21 +184,21 @@ class ExportAllZipView(APIView):
             # 2. Components CSV (oldest first)
             zf.writestr('composants.csv', self._build_csv(
                 COMPONENT_HEADER,
-                _component_rows(Component.objects.filter(company=user).order_by('created_at'))
+                _component_rows(Item.objects.filter(company=user, is_main_product=False).order_by('created_at'))
             ))
 
             # 3. Products CSV (oldest first)
             zf.writestr('produits.csv', self._build_csv(
                 PRODUCT_HEADER,
-                _product_rows(Product.objects.filter(company=user).order_by('created_at'))
+                _product_rows(Item.objects.filter(company=user, is_main_product=True).order_by('created_at'))
             ))
 
             # 4. Digital Twins CSV (oldest first)
             zf.writestr('digital_twins.csv', self._build_csv(
                 TWIN_HEADER,
                 _twin_rows(
-                    ProductInstance.objects.filter(product__company=user)
-                    .select_related('product').order_by('created_at')
+                    DigitalTwin.objects.filter(company=user)
+                    .select_related('snapshot', 'snapshot__main_product').order_by('created_at')
                 )
             ))
 
@@ -233,7 +235,7 @@ class ExportComponentsCsvView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        qs = Component.objects.filter(company=request.user).order_by('created_at')
+        qs = Item.objects.filter(company=request.user, is_main_product=False).order_by('created_at')
         return _make_csv_response('composants.csv', COMPONENT_HEADER, _component_rows(qs))
 
 
@@ -241,7 +243,7 @@ class ExportProductsCsvView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        qs = Product.objects.filter(company=request.user).order_by('created_at')
+        qs = Item.objects.filter(company=request.user, is_main_product=True).order_by('created_at')
         return _make_csv_response('produits.csv', PRODUCT_HEADER, _product_rows(qs))
 
 
@@ -249,9 +251,9 @@ class ExportDigitalTwinsCsvView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        qs = ProductInstance.objects.filter(
-            product__company=request.user
-        ).select_related('product').order_by('created_at')
+        qs = DigitalTwin.objects.filter(
+            company=request.user
+        ).select_related('snapshot', 'snapshot__main_product').order_by('created_at')
         return _make_csv_response('digital_twins.csv', TWIN_HEADER, _twin_rows(qs))
 
 
@@ -301,6 +303,7 @@ class ImportComponentsCsvView(APIView):
             try:
                 Component.objects.create(
                     company=request.user,
+                    is_main_product=False,
                     name=name,
                     description=(row.get('description') or '').strip(),
                     manufacturer=(row.get('manufacturer') or '').strip(),
@@ -352,23 +355,21 @@ class ImportProductsCsvView(APIView):
             gtin_val = (row.get('gtin') or '').strip() or None
 
             # Check for GTIN duplicate before attempting create
-            if gtin_val and Product.objects.filter(gtin=gtin_val).exists():
+            if gtin_val and Item.objects.filter(gtin=gtin_val, is_main_product=True).exists():
                 errors.append(f'Ligne {i} : le GTIN « {gtin_val} » existe déjà, ligne ignorée.')
                 continue
 
             try:
-                Product.objects.create(
+                Item.objects.create(
                     company=request.user,
+                    is_main_product=True,
                     name=name,
                     description=(row.get('description') or '').strip(),
                     gtin=gtin_val,
-                    category=(row.get('category') or '').strip(),
-                    brand=(row.get('brand') or '').strip(),
-                    model_number=(row.get('model_number') or '').strip(),
+                    # These columns may exist in CSV; Item keeps them inside payload-only
+                    # for now they are ignored (kept for backward compatibility).
                     material_composition=_parse_json_col(row.get('material_composition')) or {},
                     certifications=_parse_json_col(row.get('certifications')) or [],
-                    # Always import as DRAFT regardless of the CSV value
-                    status='DRAFT',
                 )
                 created += 1
             except Exception as exc:
@@ -384,4 +385,3 @@ class ImportProductsCsvView(APIView):
             'created': created,
             'errors': errors,
         })
-

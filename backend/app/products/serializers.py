@@ -1,216 +1,171 @@
 from rest_framework import serializers
-from .models import Component, Product, ProductInstance, SupplierLink
+from .models import Item, Snapshot, DigitalTwin, SupplierLink, _serialize_item_tree
 
 
-class ComponentSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Component model.
-    """
+class ItemSerializer(serializers.ModelSerializer):
+    """Serializer for current (editable) Items."""
     company_name = serializers.CharField(source='company.company_name', read_only=True)
-    is_brand_locked = serializers.SerializerMethodField()
-    used_in_products = serializers.SerializerMethodField()
-    
+
     class Meta:
-        model = Component
+        model = Item
         fields = [
-            'id', 'company', 'company_name', 'name', 'description',
-            'manufacturer', 'material_composition', 'certifications',
-            'origin_country', 'gtin', 'supplier_validated', 'supplier_locked', 'is_archived',
-            'is_brand_locked', 'used_in_products', 'created_at', 'updated_at'
+            'id', 'company', 'company_name',
+            'name', 'description', 'manufacturer',
+            'is_main_product',
+            'supplier', 'supplier_submitted',
+            'brand', 'category', 'model_number',
+            'material_composition', 'certifications',
+            'origin_country', 'gtin',
+            'components',
+            'is_archived',
+            'created_at', 'updated_at',
         ]
-        read_only_fields = ['id', 'company', 'supplier_validated', 'supplier_locked', 'is_brand_locked', 'created_at', 'updated_at']
-        extra_kwargs = {
-            'description': {'required': False},
-            'manufacturer': {'required': False},
-            'material_composition': {'required': False},
-            'certifications': {'required': False},
-            'origin_country': {'required': False},
-            'gtin': {'required': False},
-            'is_archived': {'required': False},
-        }
-    
+        read_only_fields = ['id', 'company', 'supplier_submitted', 'created_at', 'updated_at']
+
+    def update(self, instance, validated_data):
+        # Ensure M2M (components) is applied on PUT/PATCH
+        components = validated_data.pop('components', None)
+        instance = super().update(instance, validated_data)
+        if components is not None:
+            instance.components.set(components)
+        return instance
+
     def create(self, validated_data):
-        # Auto-assign company from request user
         validated_data['company'] = self.context['request'].user
         return super().create(validated_data)
 
-    def get_is_brand_locked(self, obj):
-        return obj.products.filter(status='LOCKED').exists()
 
-    def get_used_in_products(self, obj):
-        return [
-            {
-                'id': str(product.id),
-                'name': product.name,
-                'status': product.status,
-                'is_archived': product.is_archived,
-            }
-            for product in obj.products.all()
-        ]
-
-
-class ProductListSerializer(serializers.ModelSerializer):
-    """
-    Lightweight serializer for product listing.
-    """
+class ItemListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for item listing."""
     company_name = serializers.CharField(source='company.company_name', read_only=True)
     component_count = serializers.SerializerMethodField()
-    instance_count = serializers.SerializerMethodField()
-    is_complete = serializers.SerializerMethodField()
-    
+    snapshot_count = serializers.SerializerMethodField()
+
     class Meta:
-        model = Product
+        model = Item
         fields = [
-            'id', 'company', 'company_name', 'name', 'gtin',
-            'status', 'category', 'brand', 'material_composition', 'certifications',
-            'is_archived', 'component_count',
-            'instance_count', 'is_complete', 'created_at', 'updated_at'
+            'id', 'company', 'company_name',
+            'name', 'gtin',
+            'description',
+            'manufacturer',
+            'origin_country',
+            'is_main_product',
+            'supplier', 'supplier_submitted',
+            'brand', 'category', 'model_number',
+            'material_composition',
+            'certifications',
+            'is_archived',
+            'component_count', 'snapshot_count',
+            'created_at', 'updated_at',
         ]
-    
+
     def get_component_count(self, obj):
         return obj.components.count()
-    
-    def get_instance_count(self, obj):
-        return obj.instances.count()
-    
-    def get_is_complete(self, obj):
-        return obj.is_complete()
+
+    def get_snapshot_count(self, obj):
+        return obj.snapshots.count()
 
 
-class ProductSerializer(serializers.ModelSerializer):
-    """
-    Detailed serializer for Product model.
-    """
-    company_name = serializers.CharField(source='company.company_name', read_only=True)
-    components_detail = ComponentSerializer(source='components', many=True, read_only=True)
-    is_complete = serializers.SerializerMethodField()
-    
+class SnapshotSerializer(serializers.ModelSerializer):
+    """Serializer for immutable snapshots."""
+    main_product_name = serializers.CharField(source='main_product.name', read_only=True)
+
     class Meta:
-        model = Product
-        fields = [
-            'id', 'company', 'company_name', 'name', 'description',
-            'gtin', 'components', 'components_detail', 'status',
-            'category', 'brand', 'model_number', 'material_composition',
-            'certifications', 'is_archived',
-            'json_ld', 'is_complete', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'company', 'json_ld', 'created_at', 'updated_at']
-        extra_kwargs = {
-            'description': {'required': False},
-            'gtin': {'required': False},
-            'category': {'required': False},
-            'brand': {'required': False},
-            'model_number': {'required': False},
-            'material_composition': {'required': False},
-            'certifications': {'required': False},
-            'components': {'required': False},
-        }
-    
-    def get_is_complete(self, obj):
-        return obj.is_complete()
-    
+        model = Snapshot
+        fields = ['id', 'company', 'main_product', 'main_product_name', 'created_at', 'payload']
+        read_only_fields = ['id', 'company', 'created_at', 'payload']
+
+
+class SnapshotCreateSerializer(serializers.Serializer):
+    """Create a snapshot from a main product (Item)."""
+    main_product = serializers.PrimaryKeyRelatedField(queryset=Item.objects.all())
+
     def create(self, validated_data):
-        # Auto-assign company from request user
-        validated_data['company'] = self.context['request'].user
-        components = validated_data.pop('components', [])
-        product = Product.objects.create(**validated_data)
-        product.components.set(components)
-        return product
+        main_product = validated_data['main_product']
+        request = self.context['request']
+
+        # Basic ownership guard
+        if main_product.company_id != request.user.id:
+            raise serializers.ValidationError("Not allowed")
+
+        payload = _serialize_item_tree(main_product)
+
+        snapshot = Snapshot.objects.create(
+            company=request.user,
+            main_product=main_product,
+            payload=payload,
+        )
+        return snapshot
 
 
-class ProductInstanceSerializer(serializers.ModelSerializer):
-    """
-    Serializer for ProductInstance model.
-    """
-    product_name = serializers.CharField(source='product.name', read_only=True)
-    product_gtin = serializers.CharField(source='product.gtin', read_only=True)
+class DigitalTwinSerializer(serializers.ModelSerializer):
+    """Serializer for twins generated from snapshots."""
+    main_product_name = serializers.CharField(source='snapshot.main_product.name', read_only=True)
     public_url = serializers.CharField(source='get_public_url', read_only=True)
-    
+
     class Meta:
-        model = ProductInstance
+        model = DigitalTwin
         fields = [
-            'id', 'product', 'product_name', 'product_gtin',
-            'serial_number', 'manufacturing_date', 'production_batch', 'notes',
-            'qr_code', 'public_url', 'created_at'
+            'id', 'company',
+            'snapshot', 'main_product_name',
+            'serial_number', 'manufacturing_date',
+            'production_batch', 'notes',
+            'qr_code', 'public_url',
+            'created_at'
         ]
-        read_only_fields = ['id', 'qr_code', 'created_at']
+        read_only_fields = ['id', 'company', 'qr_code', 'created_at', 'public_url']
 
 
-class ProductInstanceCreateSerializer(serializers.Serializer):
-    """
-    Serializer for batch creating product instances.
-    """
-    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+class DigitalTwinCreateSerializer(serializers.Serializer):
+    """Batch-create twins from a snapshot."""
+    snapshot = serializers.PrimaryKeyRelatedField(queryset=Snapshot.objects.all())
     quantity = serializers.IntegerField(min_value=1, max_value=1000)
     production_batch = serializers.CharField(max_length=100, required=False, allow_blank=True)
     serial_number_prefix = serializers.CharField(max_length=50, required=False, default='SN')
-    
+
     def create(self, validated_data):
-        """
-        Create multiple product instances with auto-generated serial numbers.
-        """
-        product = validated_data['product']
+        snapshot = validated_data['snapshot']
         quantity = validated_data['quantity']
         production_batch = validated_data.get('production_batch', '')
         prefix = validated_data.get('serial_number_prefix', 'SN')
-        
-        # Get number of existing instances to continue the sequence
-        # We look for serials starting with prefix and gtin
-        # and count them to determine the next index
-        prefix_pattern = f"{prefix}-{product.gtin}-"
-        existing_count = ProductInstance.objects.filter(
-            product=product,
+
+        request = self.context['request']
+        if snapshot.company_id != request.user.id:
+            raise serializers.ValidationError("Not allowed")
+
+        base = snapshot.main_product.gtin or snapshot.main_product.id
+        prefix_pattern = f"{prefix}-{base}-"
+
+        existing_count = DigitalTwin.objects.filter(
+            snapshot=snapshot,
             serial_number__startswith=prefix_pattern
         ).count()
 
-        instances = []
+        twins = []
         for i in range(quantity):
-            # Using existing_count + i + 1 ensures uniqueness if using same prefix
             serial = f"{prefix_pattern}{existing_count + i + 1:05d}"
-            instance = ProductInstance.objects.create(
-                product=product,
+            twin = DigitalTwin.objects.create(
+                company=request.user,
+                snapshot=snapshot,
                 serial_number=serial,
-                production_batch=production_batch
+                production_batch=production_batch,
             )
-            instance.generate_qr_code()
-            instance.save()
-            instances.append(instance)
-        
-        return instances
+            twin.generate_qr_code()
+            twin.save()
+            twins.append(twin)
+        return twins
 
 
-class PublicProductInstanceSerializer(serializers.ModelSerializer):
-    """
-    Public serializer for viewing product digital twin.
-    Shows product information and JSON-LD passport.
-    """
-    product_data = serializers.SerializerMethodField()
-    
+class PublicDigitalTwinSerializer(serializers.ModelSerializer):
+    """Public view of a twin: uses snapshot payload + manufacturing fields."""
+    snapshot_payload = serializers.JSONField(source='snapshot.payload', read_only=True)
+
     class Meta:
-        model = ProductInstance
-        fields = ['id', 'serial_number', 'product_data', 'created_at']
-    
-    def get_product_data(self, obj):
-        return {
-            'name': obj.product.name,
-            'description': obj.product.description,
-            'gtin': obj.product.gtin,
-            'brand': obj.product.brand,
-            'category': obj.product.category,
-            'model': obj.product.model_number,
-            'manufacturer': obj.product.company.company_name,
-            'manufacturing_date': obj.manufacturing_date,
-            'material_composition': obj.product.material_composition,
-            'certifications': obj.product.certifications,
-            'json_ld': obj.product.json_ld,
-            'components': ComponentSerializer(obj.product.components.all(), many=True).data
-        }
+        model = DigitalTwin
+        fields = ['id', 'serial_number', 'manufacturing_date', 'snapshot_payload', 'created_at']
 
 
 class SupplierLinkSerializer(serializers.ModelSerializer):
-    """
-    Serializer for brand-facing SupplierLink CRUD.
-    """
     component_name = serializers.CharField(source='component.name', read_only=True)
     is_valid = serializers.BooleanField(read_only=True)
     is_password_protected = serializers.BooleanField(read_only=True)
@@ -225,10 +180,7 @@ class SupplierLinkSerializer(serializers.ModelSerializer):
             'expires_at', 'is_revoked', 'supplier_email',
             'created_at', 'submitted_at', 'updated_at'
         ]
-        read_only_fields = [
-            'id', 'token', 'is_revoked',
-            'created_at', 'submitted_at', 'updated_at'
-        ]
+        read_only_fields = ['id', 'token', 'is_revoked', 'created_at', 'submitted_at', 'updated_at']
 
     def get_link_url(self, obj):
         from django.conf import settings
@@ -240,19 +192,13 @@ class SupplierLinkSerializer(serializers.ModelSerializer):
             return 'submitted'
         if obj.is_revoked:
             return 'revoked'
-        # New check for unified locking: if the component is locked externally, the link is inactive
-        if obj.component.supplier_locked:
-            return 'inactive'
         if obj.expires_at < timezone.now():
             return 'expired'
         return 'active'
 
 
 class SupplierLinkCreateSerializer(serializers.Serializer):
-    """
-    Serializer for creating a supplier link.
-    """
-    component = serializers.PrimaryKeyRelatedField(queryset=Component.objects.all())
+    component = serializers.PrimaryKeyRelatedField(queryset=Item.objects.all())
     password = serializers.CharField(required=False, allow_blank=True, write_only=True)
     expires_in_days = serializers.IntegerField(min_value=1, max_value=90, default=7)
     supplier_email = serializers.EmailField(required=False, allow_blank=True)
@@ -282,21 +228,7 @@ class SupplierLinkCreateSerializer(serializers.Serializer):
         return link
 
 
-class SupplierLinkPublicSerializer(serializers.Serializer):
-    """
-    Public serializer — returned when supplier accesses the magic link.
-    Shows component info + brand name, no sensitive data.
-    """
-    component_name = serializers.CharField()
-    company_name = serializers.CharField()
-    is_password_protected = serializers.BooleanField()
-    fields_to_fill = serializers.DictField()
-
-
 class SupplierSubmitSerializer(serializers.Serializer):
-    """
-    Validates supplier-submitted data for a component.
-    """
     name = serializers.CharField(max_length=255, required=False)
     description = serializers.CharField(required=False, allow_blank=True)
     manufacturer = serializers.CharField(max_length=255, required=False, allow_blank=True)

@@ -7,9 +7,9 @@ import CsvModal from '../components/CsvModal';
 import PageToolbar from '../components/PageToolbar';
 
 const DigitalTwins = () => {
-    const [products, setProducts] = useState([]);
+    const [snapshots, setSnapshots] = useState([]);
     const [formData, setFormData] = useState({
-        product: '',
+        snapshot: '',
         quantity: 10,
         production_batch: '',
         serial_number_prefix: 'SN',
@@ -24,19 +24,16 @@ const DigitalTwins = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     useEffect(() => {
-        loadProducts();
+        loadSnapshots();
         loadInstances();
     }, []);
 
-    const loadProducts = async () => {
+    const loadSnapshots = async () => {
         try {
-            const data = await productsService.getProducts();
-            const locked = (Array.isArray(data) ? data : data.results || []).filter(
-                (p) => p.status === 'LOCKED'
-            );
-            setProducts(locked);
+            const data = await productsService.getSnapshots();
+            setSnapshots(Array.isArray(data) ? data : data.results || []);
         } catch (err) {
-            console.error('Erreur lors du chargement des produits', err);
+            console.error('Erreur lors du chargement des snapshots', err);
         }
     };
 
@@ -74,7 +71,7 @@ const DigitalTwins = () => {
     const columns = [
         {
             header: 'Produit',
-            key: 'product_name',
+            key: 'main_product_name',
             className: 'px-4',
             render: (val, item) => (
                 <div className="fw-bold">{val}</div>
@@ -139,8 +136,8 @@ const DigitalTwins = () => {
 
     const filteredInstances = instances.filter(item => {
         const search = searchTerm.toLowerCase();
-        return item.product_name.toLowerCase().includes(search) || 
-               item.serial_number.toLowerCase().includes(search) ||
+        return (item.main_product_name || '').toLowerCase().includes(search) ||
+               (item.serial_number || '').toLowerCase().includes(search) ||
                (item.production_batch && item.production_batch.toLowerCase().includes(search));
     });
 
@@ -187,22 +184,22 @@ const DigitalTwins = () => {
                         <div className="row g-3">
                             <div className="col-md-8">
                                 <Form.Group className="mb-3">
-                                    <Form.Label className="fw-medium small text-muted text-uppercase">Produit (Modèles verrouillés) *</Form.Label>
+                                    <Form.Label className="fw-medium small text-muted text-uppercase">Snapshot (version) *</Form.Label>
                                     <Form.Select
-                                        value={formData.product}
-                                        onChange={(e) => setFormData({ ...formData, product: e.target.value })}
+                                        value={formData.snapshot}
+                                        onChange={(e) => setFormData({ ...formData, snapshot: e.target.value })}
                                         required
                                         className="form-select shadow-none"
                                     >
-                                        <option value="">Choisir un modèle de produit...</option>
-                                        {products.map((product) => (
-                                            <option key={product.id} value={product.id}>
-                                                {product.name} ({product.gtin})
+                                        <option value="">Choisir une version...</option>
+                                        {snapshots.map((s) => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.main_product_name} — {new Date(s.created_at).toLocaleString('fr-FR')}
                                             </option>
                                         ))}
                                     </Form.Select>
                                     <Form.Text className="text-muted">
-                                        Seuls les modèles avec un Passeport Numérique validé sont listés.
+                                        Les Digital Twins sont générés à partir d’une version (Snapshot) d’un produit.
                                     </Form.Text>
                                 </Form.Group>
                             </div>
@@ -228,7 +225,7 @@ const DigitalTwins = () => {
                                     <Form.Label className="fw-medium small text-muted text-uppercase">Lot de production</Form.Label>
                                     <Form.Control
                                         type="text"
-                                        value={formData.production_batch}
+                                        value={formData.snapshotion_batch}
                                         onChange={(e) => setFormData({ ...formData, production_batch: e.target.value })}
                                         placeholder="Ex: BATCH-2024-001"
                                         className="shadow-none"
@@ -250,7 +247,7 @@ const DigitalTwins = () => {
 
                         <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <Button variant="light" onClick={() => setShowCreateModal(false)}>Fermer</Button>
-                            <Button type="submit" variant="accent" className="text-white px-4" disabled={loading || !formData.product}>
+                            <Button type="submit" variant="accent" className="text-white px-4" disabled={loading || !formData.snapshot}>
                                 {loading ? 'Génération...' : 'Générer les Digital Twins'}
                             </Button>
                         </div>
